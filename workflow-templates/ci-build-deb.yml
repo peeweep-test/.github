@@ -3,5 +3,5 @@ on: [push, pull_request]
 
 jobs:
   call-workflow-1:
-    uses: peeweep-test/.github/workflows/build-deb.yml
+    uses: peeweep-test/.github/workflows/build-deb.yml@master
 
