@@ -1,11 +1,7 @@
-name: build
+name: ci build deb
 on: [push, pull_request]
 
 jobs:
-  linux:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Run a one-line script
-      run: echo Hello from Octo Organization
+  call-workflow-1:
+    uses: peeweep-test/.github/workflows/build-deb.yml
 
