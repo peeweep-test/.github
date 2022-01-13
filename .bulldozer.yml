@@ -7,10 +7,7 @@ merge:
   ignore:
     labels: ["do not merge"]
     comment_substrings: ["==DO_NOT_MERGE=="]
-  method: squash
-  options:
-    squash:
-      body: summarize_commits
+  method: rebase
   delete_after_merge: false
   allow_merge_with_no_checks: false
 
