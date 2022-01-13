@@ -1,20 +1,15 @@
 name: build
-on: [push]
+on:
+  push:
+    branches: [ $default-branch ]
+  pull_request:
+    branches: [ $default-branch ]
+
 jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: depends
-      run: |
-        apt update
-        DEBIAN_FRONTEND=noninteractive apt -y install g++ cmake make libboost-filesystem-dev libboost-program-options-dev devscripts pbuilder aptitude
-    - name: build deb
-      run: |
-        debuild-pbuilder -us -uc -nc
-        cp -v ../supersm_*_amd64.deb ./
-    - uses: actions/upload-artifact@v2
-      with:
-        name: supersm-linux-${{ matrix.os }}-${{ matrix.tag }}-amd64.deb
-        path: '**/*.deb'
+    - name: Run a one-line script
+      run: echo Hello from Octo Organization
 
