@@ -7,6 +7,6 @@ on:
 
 jobs:
   check_job:
-    uses: peeweep-test/hello-world-composite-action/.github/workflows/jenkine-bridge.yml@main
+    uses: peeweep-test/.github/.github/workflows/jenkine-bridge.yml@main
     secrets:
       BridgeToken: ${{ secrets.BridgeToken }}
