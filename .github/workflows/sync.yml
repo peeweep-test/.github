@@ -1,7 +1,7 @@
 name: Sync
 on:
   push:
-    paths: [".github/workflows/*", "repos/*"]
+    paths: [".github/workflows/*", "repos/**"]
   workflow_dispatch:
 
 jobs:
