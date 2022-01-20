@@ -1,0 +1,47 @@
+name: jenkine bridge
+on:
+  workflow_call:
+    secrets:
+      BridgeToken:
+        required: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Print Environment
+        run: export
+
+      - name: Install Client
+        run: |
+          sudo wget --quiet https://repo.peeweep.de/tmp/jenkins-bridge-client -O /usr/bin/jenkins-bridge-client
+          sudo chmod +x -v /usr/bin/jenkins-bridge-client
+
+      - name: Job
+        env:
+          BRIDGE_TOKEN: ${{ secrets.BridgeToken }}
+        run: |
+          jenkins-bridge-client -token "$BRIDGE_TOKEN" -printlog 1
+
+      - name: Download Artifacts
+        env:
+          BRIDGE_TOKEN: ${{ secrets.BridgeToken }}
+        run: |
+          jenkins-bridge-client -token "$BRIDGE_TOKEN" -downloadArtifacts 1
+          ls -lh ./artifacts
+
+      - uses: peeweep-test/upload-artifact@single-artifact-upload
+        with:
+          path: ./artifacts/*.deb
+          single-archive: "false"
+  coding:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Print Environment
+        run: export
+
+      - name: Code Check
+        run: echo checking

@@ -1,0 +1,12 @@
+name: check
+on:
+  push:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  check_job:
+    uses: peeweep-test/hello-world-composite-action/.github/workflows/jenkine-bridge.yml@main
+    secrets:
+      BridgeToken: ${{ secrets.BridgeToken }}

@@ -1,0 +1,29 @@
+name: Sync
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: "^1.17.0"
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v13.1
+
+      - name: List all changed files
+        run: |
+          echo ${{ steps.changed-files.outputs.all_changed_files }}
+
+      - name: Sync all changed files
+        run: go run . -app_id 164400 -installation_id 22221748
+        env:
+          PRIVATE_KEY: ${{secrets.APP_PRIVATE_KEY}}
+          CHANGED_LIST: ${{ steps.changed-files.outputs.all_changed_files }}
