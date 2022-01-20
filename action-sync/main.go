@@ -137,7 +137,7 @@ func sendFile(ctx context.Context, client *github.Client, localFile string, owne
 			log.Println("\t\tBranche", branche, " no change")
 			continue
 		}
-		log.Println("\t\tBranche", owner, repo, path, message)
+		log.Println("\t\tBranche", branche, owner, repo, path, message)
 		_, _, err = client.Repositories.UpdateFile(
 			ctx, owner, repo, path,
 			&github.RepositoryContentFileOptions{
