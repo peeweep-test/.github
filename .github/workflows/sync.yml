@@ -1,17 +1,13 @@
 name: Sync
 on:
   push:
-    paths: [".github/workflows/*", "repos/**"]
-  workflow_dispatch:
-    inputs:
-      sync_all:
-        description: "sync all"
-        required: false
-        default: false
-      dry_run:
-        description: "dry run"
-        required: false
-        default: false
+    paths:
+      [
+        ".github/workflows/sync.yml",
+        "repos/**",
+        "workflow-templates/**",
+        "action-sync/**",
+      ]
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -33,7 +29,7 @@ jobs:
       - name: Sync all changed files
         run: |
           cd action-sync; go build; cd ..
-          ./action-sync/action-sync -app_id 164400 -installation_id 22221748 -syncAll ${{ github.event.inputs.sync_all }} -dryRun ${{ github.event.inputs.dry_run }}
+          ./action-sync/action-sync -app_id 164400 -installation_id 22221748
         env:
           PRIVATE_KEY: ${{secrets.APP_PRIVATE_KEY}}
           CHANGED_LIST: ${{ steps.changed-files.outputs.all_changed_files }}

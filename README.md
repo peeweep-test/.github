@@ -15,10 +15,10 @@
 ├── go.sum
 ├── main.go
 ├── README.md
-├── repos 同步配置，遍历该目录下所有配置文件，并根据配置进行文件同步
+├── repos 同步配置，目录下文件发生变动，读取变动的配置，并触发该配置的变动
 │   └── peeweep-test
 │       └── test-action.json
-└── workflow-templates  Action模板，在GitHub添加Action时可选择
+└── workflow-templates  Action模板，在GitHub添加Action时可选择，修改目录下文件，会触发所有配置同步
     ├── check.properties.json
     └── check.yml
 ```
@@ -43,3 +43,7 @@
 虽然配置可写在 repos 目录下任意位置，但为了便于维护，建议以仓库路径为文件名
 
 例如同步到 peeweep-test/test-action 仓库的配置文件建议放置到 repos/peeweep-test/test-action.json
+
+## TODO
+
+- [] 同步流程手动触发会无权限同步文件

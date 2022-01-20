@@ -44,8 +44,14 @@ func main() {
 	ctx := context.Background()
 
 	files := strings.Fields(changedList)
-	// Sync all repositories if workflows changed
-	if syncAll || len(changedList) == 0 {
+	// Sync all repositories if do not repos changed
+	for i := range files {
+		if !strings.HasPrefix(files[i], "repos") {
+			syncAll = true
+			break
+		}
+	}
+	if syncAll {
 		files, err = findFile("repos")
 		if err != nil {
 			panic(err)
