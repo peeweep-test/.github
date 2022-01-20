@@ -25,7 +25,7 @@ jobs:
       - name: Sync all changed files
         run: |
           cd action-sync; go build; cd ..
-          ./action-sync/action-sync . -app_id 164400 -installation_id 22221748
+          ./action-sync/action-sync -app_id 164400 -installation_id 22221748
         env:
           PRIVATE_KEY: ${{secrets.APP_PRIVATE_KEY}}
           CHANGED_LIST: ${{ steps.changed-files.outputs.all_changed_files }}
