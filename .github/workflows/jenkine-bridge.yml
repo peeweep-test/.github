@@ -18,23 +18,32 @@ jobs:
           sudo wget --quiet https://repo.peeweep.de/tmp/jenkins-bridge-client -O /usr/bin/jenkins-bridge-client
           sudo chmod +x -v /usr/bin/jenkins-bridge-client
 
-      - name: Job
+      - name: Trigger build
+        id: generate-runid
         env:
           BRIDGE_TOKEN: ${{ secrets.BridgeToken }}
         run: |
-          jenkins-bridge-client -token "$BRIDGE_TOKEN" -printlog 1
+          # put RUN_ID to output
+          echo "::set-output name=RUN_ID::$(jenkins-bridge-client -token $BRIDGE_TOKEN -triggerBuild)"
+
+      - name: Print log
+        env:
+          BRIDGE_TOKEN: ${{ secrets.BridgeToken }}
+        run: |
+          jenkins-bridge-client -token "$BRIDGE_TOKEN" -runid "${{ steps.generate-runid.outputs.RUN_ID }}" -printlog
 
       - name: Download Artifacts
         env:
           BRIDGE_TOKEN: ${{ secrets.BridgeToken }}
         run: |
-          jenkins-bridge-client -token "$BRIDGE_TOKEN" -downloadArtifacts 1
+          jenkins-bridge-client -token "$BRIDGE_TOKEN" -runid "${{ steps.generate-runid.outputs.RUN_ID }}" -downloadArtifacts
           ls -lh ./artifacts
 
       - uses: peeweep-test/upload-artifact@single-artifact-upload
         with:
           path: ./artifacts/*.deb
           single-archive: "false"
+
   coding:
     runs-on: ubuntu-latest
     steps:
