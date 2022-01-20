@@ -44,13 +44,16 @@ func main() {
 
 	files := strings.Fields(changedList)
 	// Sync all repositories if workflows changed
-	if len(changedList) == 0 || strings.Contains(changedList, ".github/workflows") {
+	if len(changedList) == 0 {
 		files, err = findFile("repos")
 		if err != nil {
 			panic(err)
 		}
 	}
 	for _, file := range files {
+		if !strings.HasPrefix(file, "repos") {
+			continue
+		}
 		data, err := os.ReadFile(file)
 		if err != nil {
 			log.Fatal(err)

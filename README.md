@@ -1,8 +1,29 @@
-# 说明
+# GitHub Action 集成
+
+## 说明
 
 这个仓库用于提供组织的 Github Action 模板，并且在模板变化后同步文件到其他仓库
 
-# 同步配置
+## 目录结构
+
+```txt
+├── .github
+│   └── workflows
+│       ├── jenkine-bridge.yml 可重用的Action文件，在check.yml中引用
+│       └── sync.yml  自动触发的Action，用于在配置文件或Action模板变动时，自动同步到其他仓库中
+├── go.mod
+├── go.sum
+├── main.go
+├── README.md
+├── repos 同步配置，遍历该目录下所有配置文件，并根据配置进行文件同步
+│   └── peeweep-test
+│       └── test-action.json
+└── workflow-templates  Action模板，在GitHub添加Action时可选择
+    ├── check.properties.json
+    └── check.yml
+```
+
+## 同步配置
 
 在 repos 中创建任意文件，文件内容格式为 JSON,例子如下
 
@@ -10,7 +31,9 @@
 [
   {
     "src": "workflow-templates/check.yml",
-    "dest": "peeweep-test/test-action/.github/workflows/check.yml"
+    "dest": "peeweep-test/test-action/.github/workflows/check.yml",
+    // 可选项，默认同步文件到所有分支
+    "brache": ["main"]
   }
 ]
 ```
