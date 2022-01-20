@@ -45,7 +45,7 @@ func main() {
 
 	files := strings.Fields(changedList)
 	// Sync all repositories if workflows changed
-	if len(changedList) == 0 {
+	if syncAll || len(changedList) == 0 {
 		files, err = findFile("repos")
 		if err != nil {
 			panic(err)
