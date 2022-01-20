@@ -24,11 +24,12 @@ func main() {
 	changedList := os.Getenv("CHANGED_LIST")
 	var appID, installationID int64
 	var message string
-	var dryRun bool
+	var syncAll, dryRun bool
 	flag.Int64Var(&appID, "app_id", 0, "*github app id")
 	flag.Int64Var(&installationID, "installation_id", 0, "*github installation id")
 	flag.StringVar(&message, "message", "chore: Sync by "+os.Getenv("GITHUB_REPOSITORY"), "*commit message")
-	flag.BoolVar(&dryRun, "dryRun", false, "")
+	flag.BoolVar(&syncAll, "syncAll", false, "sync all repo")
+	flag.BoolVar(&dryRun, "dryRun", false, "dry run")
 	flag.Parse()
 	if appID == 0 || installationID == 0 {
 		flag.PrintDefaults()
