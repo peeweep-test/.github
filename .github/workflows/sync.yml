@@ -5,11 +5,11 @@ on:
       sync_all:
         description: "sync all"
         required: false
-        default: false
+        default: 'false'
       dry_run:
         description: "dry run"
         required: false
-        default: false
+        default: 'false'
     paths:
       [
         ".github/workflows/sync.yml",
@@ -22,11 +22,11 @@ on:
       sync_all:
         description: "sync all"
         required: false
-        default: false
+        default: 'false'
       dry_run:
         description: "dry run"
         required: false
-        default: false
+        default: 'false'
 jobs:
   sync:
     runs-on: ubuntu-latest
