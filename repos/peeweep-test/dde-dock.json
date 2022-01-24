@@ -2,6 +2,6 @@
   {
     "src": "workflow-templates/check.yml",
     "dest": "peeweep-test/dde-dock/.github/workflows/check.yml",
-    "branche": ["master"]
+    "branche": ["master","maintain/5.3.3"]
   }
 ]
