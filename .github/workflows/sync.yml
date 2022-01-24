@@ -1,6 +1,15 @@
 name: Sync
 on:
   push:
+    inputs:
+      sync_all:
+        description: "sync all"
+        required: false
+        default: false
+      dry_run:
+        description: "dry run"
+        required: false
+        default: false
     paths:
       [
         ".github/workflows/sync.yml",
