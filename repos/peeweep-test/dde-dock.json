@@ -1,0 +1,7 @@
+[
+  {
+    "src": "workflow-templates/check.yml",
+    "dest": "peeweep-test/dde-dock/.github/workflows/check.yml",
+    "branche": ["master"]
+  }
+]
