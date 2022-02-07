@@ -8,15 +8,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-
       - name: Print Environment
         run: export
 
+      - uses: actions/checkout@v2
+        with:
+          repository: "peeweep-test/jenkins-bridge-client"
+          path: jenkins-bridge-client
+
       - name: Install Client
         run: |
-          sudo wget --quiet https://repo.peeweep.de/tmp/jenkins-bridge-client -O /usr/bin/jenkins-bridge-client
-          sudo chmod +x -v /usr/bin/jenkins-bridge-client
+          cd $GITHUB_WORKSPACE/jenkins-bridge-client
+          go build .
+          sudo install -Dvm755 jenkins-bridge-client -t /usr/bin/
 
       - name: Trigger build
         id: generate-runid
