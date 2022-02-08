@@ -47,14 +47,3 @@ jobs:
         with:
           path: ./artifacts/*.deb
           single-archive: "false"
-
-  coding:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Print Environment
-        run: export
-
-      - name: Code Check
-        run: echo checking
