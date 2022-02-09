@@ -26,6 +26,7 @@ jobs:
         id: generate-runid
         env:
           BRIDGE_TOKEN: ${{ secrets.BridgeToken }}
+          CHANGE_ID: ${{ github.event.pull_request.number }}
         run: |
           # put RUN_ID to output
           echo "::set-output name=RUN_ID::$(jenkins-bridge-client -token $BRIDGE_TOKEN -triggerBuild)"
