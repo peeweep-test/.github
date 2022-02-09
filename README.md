@@ -9,7 +9,7 @@
 ```txt
 ├── .github
 │   └── workflows
-│       ├── jenkine-bridge.yml 可重用的Action文件，在check.yml中引用
+│       ├── jenkins-bridge.yml 可重用的Action文件，在check.yml中引用
 │       └── sync.yml  自动触发的Action，用于在配置文件或Action模板变动时，自动同步到其他仓库中
 ├── go.mod
 ├── go.sum
