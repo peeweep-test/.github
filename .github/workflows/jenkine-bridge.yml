@@ -47,8 +47,7 @@ jobs:
           path: ./artifacts/*.deb
           single-archive: "false"
 
-      - name: post runs
+      - name: cancelled post runs
         if: cancelled()
         run: |
-          # always cancelBuild whatever success or failed
           jenkins-bridge-client -token "$BRIDGE_TOKEN" -runid "${{ steps.generate-runid.outputs.RUN_ID }}" -cancelBuild
