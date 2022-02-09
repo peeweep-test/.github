@@ -1,6 +1,6 @@
 [
   {
     "src": "workflow-templates/check.yml",
-    "dest": "peeweep-test/test-action/.github/workflows/check.yml"
+    "dest": "peeweep-test/dtkcore/.github/workflows/check.yml"
   }
 ]
