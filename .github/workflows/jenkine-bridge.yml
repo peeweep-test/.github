@@ -4,6 +4,10 @@ on:
     secrets:
       BridgeToken:
         required: true
+
+env:
+  BRIDGE_TOKEN: ${{ secrets.BridgeToken }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,21 +29,15 @@ jobs:
       - name: Trigger build
         id: generate-runid
         env:
-          BRIDGE_TOKEN: ${{ secrets.BridgeToken }}
           CHANGE_ID: ${{ github.event.pull_request.number }}
         run: |
-          # put RUN_ID to output
           echo "::set-output name=RUN_ID::$(jenkins-bridge-client -token $BRIDGE_TOKEN -triggerBuild)"
 
       - name: Print log
-        env:
-          BRIDGE_TOKEN: ${{ secrets.BridgeToken }}
         run: |
           jenkins-bridge-client -token "$BRIDGE_TOKEN" -runid "${{ steps.generate-runid.outputs.RUN_ID }}" -printlog
 
       - name: Download Artifacts
-        env:
-          BRIDGE_TOKEN: ${{ secrets.BridgeToken }}
         run: |
           jenkins-bridge-client -token "$BRIDGE_TOKEN" -runid "${{ steps.generate-runid.outputs.RUN_ID }}" -downloadArtifacts
           ls -lh ./artifacts
@@ -48,3 +46,9 @@ jobs:
         with:
           path: ./artifacts/*.deb
           single-archive: "false"
+
+      - name: post runs
+        if: always()
+        run: |
+          # always cancelBuild whatever success or failed
+          jenkins-bridge-client -token "$BRIDGE_TOKEN" -runid "${{ steps.generate-runid.outputs.RUN_ID }}" -cancelBuild
