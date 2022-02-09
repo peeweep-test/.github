@@ -66,9 +66,9 @@ func main() {
 			log.Fatal(err)
 		}
 		var configs []struct {
-			Src     string   `json:"src"`
-			Dest    string   `json:"dest"`
-			Branche []string `json:"branche"`
+			Src      string   `json:"src"`
+			Dest     string   `json:"dest"`
+			Branches []string `json:"branches"`
 		}
 		err = json.Unmarshal(data, &configs)
 		if err != nil {
@@ -87,7 +87,7 @@ func main() {
 			if dryRun {
 				continue
 			}
-			err = sendFile(ctx, client, config.Src, owner, repo, path, message, config.Branche)
+			err = sendFile(ctx, client, config.Src, owner, repo, path, message, config.Branches)
 			if err != nil {
 				log.Fatal(err)
 			}
