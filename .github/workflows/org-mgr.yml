@@ -2,12 +2,15 @@ name: organization-manager
 on:
   push:
     paths: ["organization.yaml"]
-    
+
 jobs:
-  check_job:
-    uses: myml/action-organization-manager@main
-    with:
-      app_id: 164400
-      installation_id: 22221748
-      private_key: ${{ secrets.APP_PRIVATE_KEY }}
-      config_file: organization.yaml
+  job:
+    name: organization-manager
+    runs-on: ubuntu-latest
+    steps:
+      - uses: myml/action-organization-manager@main
+        with:
+          app_id: 164400
+          installation_id: 22221748
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          config_file: organization.yaml
