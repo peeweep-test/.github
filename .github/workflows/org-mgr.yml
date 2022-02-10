@@ -14,3 +14,4 @@ jobs:
           installation_id: 22221748
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           config_file: organization.yaml
+      - run: ls
