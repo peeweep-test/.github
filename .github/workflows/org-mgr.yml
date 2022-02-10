@@ -8,10 +8,10 @@ jobs:
     name: organization-manager
     runs-on: ubuntu-latest
     steps:
+      - run: ls
       - uses: myml/action-organization-manager@main
         with:
           app_id: 164400
           installation_id: 22221748
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           config_file: organization.yaml
-      - run: ls
