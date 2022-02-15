@@ -1,0 +1,64 @@
+name: Update Teams
+on:
+  push:
+    path:
+      - ".github/workflows/manage-teams.yml"
+      - "teams-manage/script.js"
+      - "teams.yaml"
+
+jobs:
+  update-teams-job:
+    if: github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v2
+
+      - name: install depends for load scripts
+        run: |
+          npm install js-yaml
+          npm install @octokit/rest
+          npm install @octokit/auth-app
+
+      # this step from https://github.com/ci-cd-scripts/self-service/blob/0fb3c229/.github/workflows/validate-inputs.yml#L94
+      - name: Get token using github-script
+        id: get-token
+        uses: actions/github-script@v6
+        env:
+          DISPATCHER_APP_ID: 164400
+          DISPATCHER_APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+        with:
+          script: |
+            const { Octokit } = require("@octokit/rest");
+            const { createAppAuth } = require("@octokit/auth-app");
+            const appOctokit = new Octokit({
+              authStrategy: createAppAuth,
+              auth: {
+                appId: process.env.DISPATCHER_APP_ID,
+                privateKey: process.env.DISPATCHER_APP_PRIVATE_KEY,
+              }
+            });
+            const app_installation = await appOctokit.rest.apps.getRepoInstallation({
+              owner: context.payload.organization.login,
+              repo: context.payload.repository.name
+            });
+            const { token } = await appOctokit.auth({
+              type: "installation",
+              // defaults to `options.auth.installationId` set in the constructor
+              installationId: app_installation.data.id
+            });
+            // core.setSecret(token)  // Not needed. Set by Octokit
+            core.setOutput('app_token', token)
+            // Revoke Access Token in POST-RUN job (#9)
+            // github.rest.apps.revokeInstallationAccessToken();
+
+      - name: load scripts
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ steps.get-token.outputs.app_token }}
+          debug: true
+          script: |
+            const script = require('./teams-manage/script.js');
+            (async function () {
+              await script({github, context});
+            })();

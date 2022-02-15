@@ -1,0 +1,11 @@
+teams:
+  admin: # team 名
+    members: # team 成员
+      - peeweep
+  dtkcore:
+    members:
+      - peeweep
+  reviewer:
+    members:
+      - myml
+      - peeweep
