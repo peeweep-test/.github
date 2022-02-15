@@ -5,6 +5,7 @@ teams:
   dtkcore:
     members:
       - peeweep
+      - myml
   reviewer:
     members:
       - myml
