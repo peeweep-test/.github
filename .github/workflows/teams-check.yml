@@ -5,6 +5,11 @@ on:
       - ".github/workflows/teams-pr-lint.yml"
       - "teams-manager/lint-yaml.js"
       - "teams.yaml"
+  push:
+    path:
+      - ".github/workflows/teams-pr-lint.yml"
+      - "teams-manager/lint-yaml.js"
+      - "teams.yaml"
 
 jobs:
   check-teams:
