@@ -8,7 +8,7 @@ on:
 
 jobs:
   update-teams-job:
-    if: github.ref_name == 'main'
+    if: github.ref_name == 'main' && github.repository == 'peeweep-test/.github'
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
