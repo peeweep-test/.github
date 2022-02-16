@@ -1,8 +1,8 @@
 name: Teams Update
 on:
   push:
-    path:
-      - ".github/workflows/teams-push.yml"
+    paths:
+      - ".github/workflows/teams-update.yml"
       - "teams-manager/script.js"
       - "teams.yaml"
 

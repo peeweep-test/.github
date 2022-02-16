@@ -1,13 +1,13 @@
 name: Teams Check
 on:
   pull_request_target:
-    path:
-      - ".github/workflows/teams-pr-lint.yml"
+    paths:
+      - ".github/workflows/teams-check.yml"
       - "teams-manager/lint-yaml.js"
       - "teams.yaml"
   push:
-    path:
-      - ".github/workflows/teams-pr-lint.yml"
+    paths:
+      - ".github/workflows/teams-check.yml"
       - "teams-manager/lint-yaml.js"
       - "teams.yaml"
 
