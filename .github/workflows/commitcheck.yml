@@ -1,0 +1,20 @@
+name: Lint Commit Messages
+on:
+  workflow_call:
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Download commitlint config teamplate
+        run: |
+          wget https://raw.githubusercontent.com/peeweep-test/supersm/test-commitlint/commitlint.config.js \
+            -O ./commitlint.config.js
+
+      - uses: wagoid/commitlint-github-action@v4
+        with:
+          configFile: "./commitlint.config.js"

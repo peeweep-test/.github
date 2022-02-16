@@ -1,0 +1,7 @@
+[
+  {
+    "src": "workflow-templates/commitlint.yml",
+    "dest": "peeweep-test/.github/.github/workflows/commitlint.yml",
+    "branches": ["main"]
+  }
+]
