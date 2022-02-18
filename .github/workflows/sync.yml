@@ -44,7 +44,7 @@ jobs:
       - name: Get all configs
         id: all-configs
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: echo '::set-output name=ALL_CONFIGS::green'
+        run: echo '::set-output name=ALL_CONFIGS::`find action-cppcheck | xargs`'
       - name: DEBUG
         run: echo "${{ steps.all-configs.outputs.ALL_CONFIGS }}"
 #       - name: Sync changed files
