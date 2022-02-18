@@ -33,7 +33,7 @@ jobs:
           installation_id: 22221748
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           files: "${{ steps.changed-configs.outputs.all_changed_files }}"
-          message: "chore: Sync by peeweep-test/.github"
+          message: "chore: Sync by peeweep-test/.github ${{ github.sha }}"
           
       - name: Get changed files
         id: changed-files
@@ -58,4 +58,4 @@ jobs:
           installation_id: 22221748
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           files: "${{ steps.all-configs.outputs.ALL_CONFIGS }}"
-          message: "chore: Sync by peeweep-test/.github"
+          message: "chore: Sync by peeweep-test/.github ${{ github.sha }}"
