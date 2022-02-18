@@ -40,12 +40,15 @@ jobs:
         uses: tj-actions/changed-files@v16
         with:
           separator: " "
-          files: workflow-templates/**
+          files: |
+            workflow-templates/**
+            .github/workflows/sync.yml
       - name: Get all configs
         id: all-configs
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: echo '::set-output name=ALL_CONFIGS::`find action-cppcheck | xargs`'
+        run: echo '::set-output name=ALL_CONFIGS::`find repos -type f | xargs`'
       - name: DEBUG
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: echo "${{ steps.all-configs.outputs.ALL_CONFIGS }}"
 #       - name: Sync changed files
 #         uses: myml/action-sync@main
