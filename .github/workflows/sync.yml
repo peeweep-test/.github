@@ -9,6 +9,8 @@ on:
   
 jobs:
   sync:
+    env:
+      SHA8: ${GITHUB_SHA::8}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -29,7 +31,7 @@ jobs:
           installation_id: 22221748
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           files: "${{ steps.changed-configs.outputs.all_changed_files }}"
-          message: "chore: Sync by peeweep-test/.github ${{ github.sha }}"
+          message: "chore: Sync by peeweep-test/.github $SHA8"
           
       # Full sync when file changed or workflow_dispatch event
       - name: Get changed files
@@ -55,4 +57,4 @@ jobs:
           installation_id: 22221748
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           files: "${{ steps.all-configs.outputs.ALL_CONFIGS }}"
-          message: "chore: Sync by peeweep-test/.github ${{ github.sha }}"
+          message: "chore: Sync by peeweep-test/.github $SHA8"
