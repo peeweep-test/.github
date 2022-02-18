@@ -2,6 +2,6 @@
   {
     "src": "workflow-templates/check.yml",
     "dest": "peeweep-test/dtkcore/.github/workflows/check.yml",
-    "branches": ["master"] 
+    "branches": ["master"]
   }
 ]
