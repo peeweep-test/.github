@@ -49,7 +49,7 @@ jobs:
         run: |
           all_configs=`find repos -type f | xargs`
           echo all configs $all_configs
-          echo '::set-output name=ALL_CONFIGS::$all_configs'
+          echo "::set-output name=ALL_CONFIGS::$all_configs"
       - name: Sync changed files
         uses: myml/action-sync@main
         if: steps.changed-files.outputs.any_changed == 'true'
