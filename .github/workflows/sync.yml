@@ -25,7 +25,8 @@ jobs:
           separator: " "
           files: repos/**
         
-      - uses: myml/action-sync@main
+      - name: Sync changed files
+        uses: myml/action-sync@main
         if: steps.changed-files.outputs.any_changed == 'true'
         with:
           app_id: 164400
