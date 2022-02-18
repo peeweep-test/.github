@@ -17,10 +17,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get short SHA
-        id: slug
-        run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
-
       # Incremental sync when config changed
       - name: Get changed configs
         id: changed-configs
@@ -36,7 +32,7 @@ jobs:
           installation_id: 22221748
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           files: "${{ steps.changed-configs.outputs.all_changed_files }}"
-          message: "chore: Sync by peeweep-test/.github ${{ steps.slug.outputs.sha8 }}"
+          message: "chore: Sync by ${{ github.event.commits.url }}"
           
       # Full sync when file changed or workflow_dispatch event
       - name: Get changed files
@@ -62,4 +58,4 @@ jobs:
           installation_id: 22221748
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           files: "${{ steps.all-configs.outputs.ALL_CONFIGS }}"
-          message: "chore: Sync by peeweep-test/.github ${{ steps.slug.outputs.sha8 }}"
+          message: "chore: Sync by ${{ github.event.commits.url }}"
