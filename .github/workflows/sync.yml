@@ -15,10 +15,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v16
+        
       - uses: myml/action-sync@main
         with:
           app_id: 164400
           installation_id: 22221748
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
-          files: "repos/peeweep-test/dtkcore.json repos/peeweep-test/dtkcore.json"
+          files: "${{ steps.changed-files.outputs.all_changed_files }}"
           message: "chore: Sync by peeweep-test/.github"
