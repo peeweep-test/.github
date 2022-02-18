@@ -18,19 +18,41 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: Get changed files
-        id: changed-files
+      - name: Get changed configs
+        id: changed-configs
         uses: tj-actions/changed-files@v16
         with:
           separator: " "
           files: repos/**
         
-      - name: Sync changed files
+      - name: Sync changed configs
         uses: myml/action-sync@main
-        if: steps.changed-files.outputs.any_changed == 'true'
+        if: steps.changed-configs.outputs.any_changed == 'true'
         with:
           app_id: 164400
           installation_id: 22221748
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
-          files: "${{ steps.changed-files.outputs.all_changed_files }}"
+          files: "${{ steps.changed-configs.outputs.all_changed_files }}"
           message: "chore: Sync by peeweep-test/.github"
+          
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v16
+        with:
+          separator: " "
+          files: workflow-templates/**
+      - name: Get all configs
+        id: all-configs
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: echo '::set-output name=ALL_CONFIGS::green'
+      - name: DEBUG
+        run: echo "${{ steps.all-configs.outputs.ALL_CONFIGS }}"
+#       - name: Sync changed files
+#         uses: myml/action-sync@main
+#         if: steps.changed-files.outputs.any_changed == 'true'
+#         with:
+#           app_id: 164400
+#           installation_id: 22221748
+#           private_key: ${{ secrets.APP_PRIVATE_KEY }}
+#           files: "${{ steps.changed-files.outputs.all_changed_files }}"
+#           message: "chore: Sync by peeweep-test/.github"
