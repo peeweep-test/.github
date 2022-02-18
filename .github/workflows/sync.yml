@@ -46,16 +46,16 @@ jobs:
       - name: Get all configs
         id: all-configs
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: echo '::set-output name=ALL_CONFIGS::`find repos -type f | xargs`'
-      - name: DEBUG
+        run: |
+          all_configs=`find repos -type f | xargs`
+          echo all configs $all_configs
+          echo '::set-output name=ALL_CONFIGS::$all_configs'
+      - name: Sync changed files
+        uses: myml/action-sync@main
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: echo "${{ steps.all-configs.outputs.ALL_CONFIGS }}"
-#       - name: Sync changed files
-#         uses: myml/action-sync@main
-#         if: steps.changed-files.outputs.any_changed == 'true'
-#         with:
-#           app_id: 164400
-#           installation_id: 22221748
-#           private_key: ${{ secrets.APP_PRIVATE_KEY }}
-#           files: "${{ steps.changed-files.outputs.all_changed_files }}"
-#           message: "chore: Sync by peeweep-test/.github"
+        with:
+          app_id: 164400
+          installation_id: 22221748
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          files: "${{ steps.all-configs.outputs.ALL_CONFIGS }}"
+          message: "chore: Sync by peeweep-test/.github"
