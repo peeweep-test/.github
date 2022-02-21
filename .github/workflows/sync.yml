@@ -3,8 +3,8 @@ on:
   push:
     paths:
       - ".github/workflows/sync.yml"
-      - "repos/**"
-      - "workflow-templates/**"
+      - "repos/**.json"
+      - "workflow-templatee/**.yml"
   workflow_dispatch:
   
 jobs:
@@ -23,7 +23,7 @@ jobs:
         uses: tj-actions/changed-files@v16
         with:
           separator: " "
-          files: repos/**
+          files: repos/**.json
       - name: Sync changed configs
         uses: myml/action-sync@main
         if: steps.changed-configs.outputs.any_changed == 'true'
@@ -41,13 +41,13 @@ jobs:
         with:
           separator: " "
           files: |
-            workflow-templates/**
+            workflow-templates/**.yml
             .github/workflows/sync.yml
       - name: Get all configs
         id: all-configs
         if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch'
         run: |
-          all_configs=`find repos -type f | xargs`
+          all_configs=`find repos -type f | grep json | xargs`
           echo all configs $all_configs
           echo "::set-output name=ALL_CONFIGS::$all_configs"
       - name: Sync changed files
