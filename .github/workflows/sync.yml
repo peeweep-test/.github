@@ -6,7 +6,7 @@ on:
       - "repos/**.json"
       - "workflow-templatee/**.yml"
   workflow_dispatch:
-  
+
 jobs:
   sync:
     env:
@@ -23,7 +23,8 @@ jobs:
         uses: tj-actions/changed-files@v16
         with:
           separator: " "
-          files: repos/**.json
+          files: |
+            repos/peeweep-test/*.json
       - name: Sync changed configs
         uses: myml/action-sync@main
         if: steps.changed-configs.outputs.any_changed == 'true'
@@ -33,7 +34,7 @@ jobs:
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
           files: "${{ steps.changed-configs.outputs.all_changed_files }}"
           message: "chore: Sync by ${{ github.event.head_commit.url }}"
-          
+
       # Full sync when file changed or workflow_dispatch event
       - name: Get changed files
         id: changed-files
@@ -41,7 +42,7 @@ jobs:
         with:
           separator: " "
           files: |
-            workflow-templates/**.yml
+            workflow-templates/*.yml
             .github/workflows/sync.yml
       - name: Get all configs
         id: all-configs
