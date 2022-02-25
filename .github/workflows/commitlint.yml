@@ -5,4 +5,4 @@ on:
 
 jobs:
   check_job:
-    uses: peeweep-test/.github/.github/workflows/commitcheck.yml@main
+    uses: linuxdeepin/.github/.github/workflows/commitlint.yml@master
