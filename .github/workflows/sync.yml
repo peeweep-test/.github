@@ -26,7 +26,7 @@ jobs:
           files: |
             repos/peeweep-test/*.json
       - name: Sync changed configs
-        uses: myml/action-sync@main
+        uses: myml/action-sync@dev
         if: steps.changed-configs.outputs.any_changed == 'true'
         with:
           app_id: 164400
@@ -52,7 +52,7 @@ jobs:
           echo all configs $all_configs
           echo "::set-output name=ALL_CONFIGS::$all_configs"
       - name: Sync changed files
-        uses: myml/action-sync@main
+        uses: myml/action-sync@dev
         if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch'
         with:
           app_id: 164400
