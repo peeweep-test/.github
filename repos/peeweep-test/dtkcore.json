@@ -12,6 +12,6 @@
   
   {
     "src": "workflow-templates/check.yml",
-    "dest": "peeweep-test/dtkcore/.github/workflows/commitlint.yml
-  },
+    "dest": "peeweep-test/dtkcore/.github/workflows/commitlint.yml"
+  }
 ]
