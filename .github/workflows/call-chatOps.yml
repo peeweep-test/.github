@@ -1,0 +1,8 @@
+name: chatOps
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  chatopt:
+    uses: peeweep-test/.github/.github/workflows/chatOps.yml@main
