@@ -7,12 +7,14 @@
   {
     "src": "workflow-templates/check.properties.json",
     "dest": "peeweep-test/dtkcore/.github/workflows/check.properties.json",
-    "branches": ["master"]
+    "branches": ["master"],
+    "delete": true
   },
   
   {
     "src": "workflow-templates/check.yml",
-    "dest": "peeweep-test/dtkcore/.github/workflows/commitlint.yml"
+    "dest": "peeweep-test/dtkcore/.github/workflows/commitlint.yml",
+    "delete": true
   }
   
 ]
