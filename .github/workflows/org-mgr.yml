@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: myml/action-organization-manager@v0.0.3
+      - uses: myml/action-organization-manager@dev
         with:
           app_id: 164400
           installation_id: 22221748
