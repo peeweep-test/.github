@@ -11,6 +11,6 @@ jobs:
         with:
           script: |
             const repos=await github.rest.repos.listForOrg({
-              "linuxdeepin",
+              "linuxdeepin"
             });
             console.log(repos)
