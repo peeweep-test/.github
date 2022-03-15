@@ -8,5 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
+          echo ${GITHUB_WORKSPACE}
+          find ${GITHUB_WORKSPACE}
           chmod +x "${GITHUB_WORKSPACE}/.github/backup-to-gitee.bash"
           "${GITHUB_WORKSPACE}/.github/backup-to-gitee.bash"
