@@ -8,7 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          rm repos_*.json
           while true;do
             let page++
             sleep 1
