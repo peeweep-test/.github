@@ -1,5 +1,6 @@
 #!/bin/bash
 name="linuxdeepin"
+rm repos_*.json || true
 while true;do
 	let page++
 	sleep 1
@@ -10,4 +11,6 @@ while true;do
       		break
   	fi
 done
-ls -l
+for name in $(cat repos_*.json | jq '.[] | .name');do
+	echo $name
+done
