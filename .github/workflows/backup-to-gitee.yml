@@ -7,8 +7,8 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - run: |
           echo ${GITHUB_WORKSPACE}
           find ${GITHUB_WORKSPACE}
-          chmod +x "${GITHUB_WORKSPACE}/.github/backup-to-gitee.bash"
-          "${GITHUB_WORKSPACE}/.github/backup-to-gitee.bash"
+          bash ".github/workflows/backup-to-gitee.bash"
