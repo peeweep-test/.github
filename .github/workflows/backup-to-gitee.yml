@@ -1,0 +1,16 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            const repos=await github.rest.repos.listForOrg({
+              org,
+            });
+            console.log(repos)
