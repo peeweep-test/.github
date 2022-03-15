@@ -10,7 +10,6 @@ jobs:
       - uses: actions/github-script@v6
         with:
           script: |
-            const repos=await github.rest.repos.listForOrg({
-              "linuxdeepin"
-            });
+            const org = "linuxdeepin"
+            const repos = await github.rest.repos.listForOrg({org});
             console.log(repos)
