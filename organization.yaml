@@ -1,14 +1,9 @@
 organization: peeweep-test
 settings:
   # all repo
-  - repositories: [".+"]
-    features:
-      issues:
-        enable: true
-      allow_merge_commit:
-        enable: false
   - repositories: [dtkcore]
     branches:
+      *:
       master:
         dismiss_stale_reviews: true
         enforce_admins: false
