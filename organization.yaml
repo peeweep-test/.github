@@ -3,7 +3,7 @@ settings:
   # all repo
   - repositories: [dtkcore]
     branches:
-      *:
+      "*":
       master:
         dismiss_stale_reviews: true
         enforce_admins: false
