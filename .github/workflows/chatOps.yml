@@ -81,7 +81,7 @@ jobs:
           script: |
             console.log("sender",context.payload.sender)
             if(context.payload.sender.id != context.payload.issue.user.id){
-              const permission = await github.request(`GET /repos/${context.repo.owner}/${context.repo.repo}/collaborators/${context.payload.sender.id}/permission`, {
+              const permission = await github.request(`GET /repos/${context.repo.owner}/${context.repo.repo}/collaborators/${context.payload.sender.login}/permission`, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 username: context.payload.sender.login,
