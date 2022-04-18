@@ -103,15 +103,13 @@ jobs:
                 pull_number: context.issue.number,
             })
             if( pull.data.mergeable_state != "clean" ){
-              if(context.payload.sender.id != context.payload.issue.user.id){
-                  await github.rest.issues.createComment({
-                    issue_number: context.issue.number,
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    body: pull.data.mergeable_state
-                  })
-                  return
-              }
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: `This pr cannot be merged($(pull.data.mergeable_state))`
+                })
+                return
             }
             await github.rest.pulls.merge({
               owner: context.repo.owner,
