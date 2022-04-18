@@ -107,7 +107,7 @@ jobs:
                   issue_number: context.issue.number,
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  body: `This pr cannot be merged($(pull.data.mergeable_state))`
+                  body: `This pr cannot be merged!(status: ${pull.data.mergeable_state})`
                 })
                 return
             }
