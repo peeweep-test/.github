@@ -81,13 +81,21 @@ jobs:
           script: |
             console.log("sender",context.payload.sender)
             if(context.payload.sender.id != context.payload.issue.user.id){
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
+              const permission = await github.request(`GET /repos/${context.repo.owner}/${context.repo.repo}/collaborators/${context.payload.sender.id}/permission`, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: 'Permission denied'
+                username: context.payload.sender.login,
               })
-              return
+              console.log("permission",permission)
+              if(!["admin","maintain","write"].includes(permission.data.permission)){
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: 'Permission denied'
+                })
+                return
+              }
             }
             const pull = await github.rest.pulls.get({
                 owner: context.repo.owner,
