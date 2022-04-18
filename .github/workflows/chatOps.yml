@@ -79,6 +79,7 @@ jobs:
           REF: ${{ github.event.pull_request.head.ref }}
         with:
           script: |
+            console.log("sender",context.payload.sender)
             if(context.payload.sender.id != context.payload.issue.user.id){
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
