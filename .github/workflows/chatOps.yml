@@ -78,7 +78,7 @@ jobs:
         if: contains(github.event.comment.body, '/check')
         with:
           script: |
-            const resp = await octokit.rest.checks.listForRef({
+            const resp = await github.rest.checks.listForRef({
               owner,
               repo,
               ref,
