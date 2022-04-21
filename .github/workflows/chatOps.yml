@@ -83,12 +83,10 @@ jobs:
                 repo: context.repo.repo,
                 pull_number: context.issue.number,
             })
-            console.log("pull",pull)
-            return
             const resp = await github.rest.checks.listForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: REF,
+              ref: pull.data.head.sha,
             });
             console.log("checks", resp.data.check_runs)
       - name: merge
