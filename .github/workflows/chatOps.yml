@@ -76,20 +76,20 @@ jobs:
       - name: check
         uses: actions/github-script@v5
         if: contains(github.event.comment.body, '/check')
+        env:
+          REF: ${{ github.event.pull_request.head.ref }}
         with:
           script: |
-            const { GITHUB_SHA } = process.env
+            const { REF } = process.env
             const resp = await github.rest.checks.listForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: GITHUB_SHA,
+              ref: REF,
             });
             console.log("checks", resp.data.check_runs)
       - name: merge
         uses: actions/github-script@v5
         if: contains(github.event.comment.body, '/merge')
-        env:
-          REF: ${{ github.event.pull_request.head.ref }}
         with:
           script: |
             console.log("sender",context.payload.sender)
