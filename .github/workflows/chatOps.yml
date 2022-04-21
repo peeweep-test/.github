@@ -72,6 +72,18 @@ jobs:
               repo: context.repo.repo,
               labels: ['approve']
             })
+      
+      - name: check
+        uses: actions/github-script@v5
+        if: contains(github.event.comment.body, '/check')
+        with:
+          script: |
+            const resp = await octokit.rest.checks.listForRef({
+              owner,
+              repo,
+              ref,
+            });
+            console.log("checks", resp)
       - name: merge
         uses: actions/github-script@v5
         if: contains(github.event.comment.body, '/merge')
