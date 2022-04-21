@@ -88,7 +88,13 @@ jobs:
               repo: context.repo.repo,
               ref: pull.data.head.sha,
             });
-            console.log("checks", resp.data.check_runs)
+            for(const run of resp.data.check_runs){
+              await octokit.rest.checks.rerequestSuite({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                check_suite_id: run.check_suite.id,
+              });
+            }
       - name: merge
         uses: actions/github-script@v5
         if: contains(github.event.comment.body, '/merge')
