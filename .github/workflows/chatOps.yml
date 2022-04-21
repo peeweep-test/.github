@@ -89,7 +89,7 @@ jobs:
               ref: pull.data.head.sha,
             });
             for(const run of resp.data.check_runs){
-              await octokit.rest.checks.rerequestSuite({
+              await github.rest.checks.rerequestSuite({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 check_suite_id: run.check_suite.id,
