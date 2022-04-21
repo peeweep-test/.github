@@ -76,11 +76,15 @@ jobs:
       - name: check
         uses: actions/github-script@v5
         if: contains(github.event.comment.body, '/check')
-        env:
-          REF: ${{ github.event.pull_request.head.sha }}
         with:
           script: |
-            const { REF } = process.env
+            const pull = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+            })
+            console.log("pull",pull)
+            return
             const resp = await github.rest.checks.listForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
