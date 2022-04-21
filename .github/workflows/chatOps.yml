@@ -78,10 +78,11 @@ jobs:
         if: contains(github.event.comment.body, '/check')
         with:
           script: |
+            const { GITHUB_SHA } = process.env
             const resp = await github.rest.checks.listForRef({
-              owner,
-              repo,
-              ref,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: GITHUB_SHA,
             });
             console.log("checks", resp)
       - name: merge
