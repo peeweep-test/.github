@@ -77,7 +77,7 @@ jobs:
         uses: actions/github-script@v5
         if: contains(github.event.comment.body, '/check')
         env:
-          REF: ${{ github.event.pull_request.head.ref }}
+          REF: ${{ github.event.pull_request.head.sha }}
         with:
           script: |
             const { REF } = process.env
