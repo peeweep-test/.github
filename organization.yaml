@@ -11,3 +11,4 @@ settings:
         required_status_checks:
           require_review: true
           strict: true
+
