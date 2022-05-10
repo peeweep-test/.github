@@ -20,3 +20,8 @@ jobs:
             new-line-at-end-of-file: {level: warning}
           }
         }" .'
+      - name: Test GitHub Job Summary
+        run: 'echo "| Unit Test   | Result         |
+                    | ----------- | -------------- |
+                    | Test 1      | :red_circle:   |
+                    | Test 2      | :green_circle: |" >> $GITHUB_STEP_SUMMARY'
