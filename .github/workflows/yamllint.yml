@@ -21,7 +21,8 @@ jobs:
           }
         }" .'
       - name: Test GitHub Job Summary
-        run: 'echo "| Unit Test   | Result         |
-                    | ----------- | -------------- |
-                    | Test 1      | :red_circle:   |
-                    | Test 2      | :green_circle: |" >> $GITHUB_STEP_SUMMARY'
+        run: |
+          echo "| Unit Test   | Result         |" >> $GITHUB_STEP_SUMMARY
+          echo "| ----------- | -------------- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test 1      | :red_circle:   |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test 2      | :green_circle: |" >> $GITHUB_STEP_SUMMARY
