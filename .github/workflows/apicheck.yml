@@ -4,11 +4,14 @@ on:
     secrets:
       BridgeToken:
         required: true
+    inputs:
       GITHUBTOKEN:
-        required: true
+        type: string
+        required: false
+        default: ${{ github.token }}
 env:
   SERVER: https://jenkins-bridge-deepin-pre.uniontech.com
-  GITHUB_TOKEN: ${{ secrets.GithubTOKEN }}
+  GITHUB_TOKEN: ${{ inputs.GithubTOKEN }}
   CHANGE_ID: ${{ github.event.pull_request.number }}
 jobs:
   build:
