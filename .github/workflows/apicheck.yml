@@ -18,7 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Print Environment
-        run: export
+        run: | 
+            export
+            echo ${{ github.token }}
 
       - uses: actions/checkout@v2
         with:
