@@ -12,30 +12,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Print Environment
-        run: | 
-            export
-            echo ${{ github.token }}
-
-      - uses: actions/checkout@v2
-        with:
-          repository: "linuxdeepin/jenkins-bridge-client"
-          path: jenkins-bridge-client
-      - name: Install Client
+      - name: Check api
+        id: check
         run: |
-          cd $GITHUB_WORKSPACE/jenkins-bridge-client
+          # Install Client
+          git clone https://github.com/linuxdeepin/jenkins-bridge-client.git jenkins-bridge-client
+          cd jenkins-bridge-client
           go build .
           sudo install -Dvm755 jenkins-bridge-client -t /usr/bin/
-          
-      - name: Check api
-        id: generate-runid
-        run: |
+          # Run API Check
           runid=$(jenkins-bridge-client -token ${{ secrets.BridgeToken }} -triggerAbicheck)
           jenkins-bridge-client wait -server $SERVER -token ${{ secrets.BridgeToken }} -runid $runid
           jenkins-bridge-client apipass -server $SERVER -token ${{ secrets.BridgeToken }} || echo "::set-output name=PASS_CODE::$?"
+          
       - name: Check not pass 
         uses: actions/github-script@v6
-        if: ${{ steps.pass-check.outputs.PASS_CODE }}  == "-1"
+        if: ${{ steps.check.outputs.PASS_CODE }}  == "-1"
         with:
           script: |
             github.rest.issues.addLabels({
@@ -44,9 +36,5 @@ jobs:
               repo: context.repo.repo,
               labels: ['api changes']
             })
-            throw "Code has api changes, please submit for review"
+            throw  new Error("Code has api changes, please submit for review")
       
-      - name: cancelled post runs
-        if: cancelled()
-        run: |
-          jenkins-bridge-client -token "$BRIDGE_TOKEN" -runid "${{ steps.generate-runid.outputs.RUN_ID }}" -cancelBuild
