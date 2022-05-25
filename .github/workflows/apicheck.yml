@@ -29,15 +29,31 @@ jobs:
           
       - name: Trigger check job
         id: generate-runid
-        env:
-          CHANGE_ID: ${{ github.event.pull_request.number }}
         run: |
           echo "::set-output name=RUN_ID::$(jenkins-bridge-client -token ${{ secrets.BridgeToken }} -triggerAbicheck)"
+          
       - name: Wait check finish
         run: |
           jenkins-bridge-client wait -server $SERVER -token ${{ secrets.BridgeToken }} -runid ${{ steps.generate-runid.outputs.RUN_ID }}
-          jenkins-bridge-client apipass -server $SERVER -token ${{ secrets.BridgeToken }}
-          
+      - name: Pass check
+        id: pass-check
+        run: |
+          jenkins-bridge-client apipass -server $SERVER -token ${{ secrets.BridgeToken }} || echo "::set-output name=PASS_CODE::$?"
+      - name: Debug
+        run: |
+          echo ${{ steps.pass-check.outputs.PASS_CODE }}
+      - name: NotPass
+        uses: actions/github-script@v6
+        if: ${{ steps.pass-check.outputs.PASS_CODE }}  == "-1"
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['api changes']
+            })
+      
       - name: cancelled post runs
         if: cancelled()
         run: |
