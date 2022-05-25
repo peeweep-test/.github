@@ -36,5 +36,5 @@ jobs:
               repo: context.repo.repo,
               labels: ['api changes']
             })
-            throw  new Error("Code has api changes, please submit for review")
+            throw "Code has api changes, please submit for review"
       
