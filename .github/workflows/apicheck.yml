@@ -4,9 +4,11 @@ on:
     secrets:
       BridgeToken:
         required: true
+      GITHUBTOKEN:
+        required: true
 env:
   SERVER: https://jenkins-bridge-deepin-pre.uniontech.com
-  
+  GITHUB_TOKEN: ${{ secrets.GithubTOKEN }}
 jobs:
   build:
     runs-on: ubuntu-latest
