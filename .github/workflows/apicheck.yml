@@ -33,7 +33,8 @@ jobs:
       - name: Wait check finish
         run: |
           jenkins-bridge-client wait -server $SERVER -token ${{ secrets.BridgeToken }} -runid ${{ steps.generate-runid.outputs.RUN_ID }}
-
+          jenkins-bridge-client apipass -server $SERVER -token ${{ secrets.BridgeToken }}
+          
       - name: cancelled post runs
         if: cancelled()
         run: |
