@@ -9,6 +9,7 @@ on:
 env:
   SERVER: https://jenkins-bridge-deepin-pre.uniontech.com
   GITHUB_TOKEN: ${{ secrets.GithubTOKEN }}
+  CHANGE_ID: ${{ github.event.pull_request.number }}
 jobs:
   build:
     runs-on: ubuntu-latest
