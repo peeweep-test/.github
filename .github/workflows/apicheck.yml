@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check api
+        if: github.event == 'pull_request_target'
         id: check
         run: |
           # Install Client
