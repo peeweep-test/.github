@@ -22,16 +22,15 @@ jobs:
           go build .
           sudo install -Dvm755 jenkins-bridge-client -t /usr/bin/
           
-      - name: Trigger build
+      - name: Trigger check job
         id: generate-runid
         env:
           CHANGE_ID: ${{ github.event.pull_request.number }}
         run: |
           echo "::set-output name=RUN_ID::$(jenkins-bridge-client -token ${{ secrets.BridgeToken }} -triggerBuild)"
-      - name: Print log
+      - name: Wait check finish
         run: |
-          jenkins-bridge-client wait -server $SERVER -token "${{ secrets.BridgeToken }}" -runid "${{ steps.generate-runid.outputs.RUN_ID }}"
-
+          jenkins-bridge-client wait -server $SERVER -token "${{ secrets.BridgeToken }}" -runid ${{ steps.generate-runid.outputs.RUN_ID }}
 
       - name: cancelled post runs
         if: cancelled()
