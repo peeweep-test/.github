@@ -32,7 +32,7 @@ jobs:
           echo "::set-output name=RUN_ID::$(jenkins-bridge-client -token ${{ secrets.BridgeToken }} -triggerBuild)"
       - name: Wait check finish
         run: |
-          jenkins-bridge-client wait -server $SERVER -runid ${{ steps.generate-runid.outputs.RUN_ID }}
+          jenkins-bridge-client wait -server $SERVER -token ${{ secrets.BridgeToken }} -runid ${{ steps.generate-runid.outputs.RUN_ID }}
 
       - name: cancelled post runs
         if: cancelled()
