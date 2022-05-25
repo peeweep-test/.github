@@ -11,7 +11,7 @@ on:
         default: ${{ github.token }}
 env:
   SERVER: https://jenkins-bridge-deepin-pre.uniontech.com
-  GITHUB_TOKEN: ${{ inputs.GithubTOKEN }}
+  GITHUB_TOKEN: ${{ inputs.GITHUBTOKEN }}
   CHANGE_ID: ${{ github.event.pull_request.number }}
 jobs:
   build:
