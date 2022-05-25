@@ -25,7 +25,7 @@ jobs:
           jenkins-bridge-client wait -server $SERVER -token ${{ secrets.BridgeToken }} -runid $runid
           jenkins-bridge-client apipass -server $SERVER -token ${{ secrets.BridgeToken }} || echo "::set-output name=PASS_CODE::$?"
           
-      - name: Check not pass 
+      - name: If check not pass 
         uses: actions/github-script@v6
         if: ${{ steps.check.outputs.PASS_CODE }}  == "-1"
         with:
