@@ -27,22 +27,13 @@ jobs:
           go build .
           sudo install -Dvm755 jenkins-bridge-client -t /usr/bin/
           
-      - name: Trigger check job
+      - name: Check api
         id: generate-runid
         run: |
-          echo "::set-output name=RUN_ID::$(jenkins-bridge-client -token ${{ secrets.BridgeToken }} -triggerAbicheck)"
-          
-      - name: Wait check finish
-        run: |
-          jenkins-bridge-client wait -server $SERVER -token ${{ secrets.BridgeToken }} -runid ${{ steps.generate-runid.outputs.RUN_ID }}
-      - name: Pass check
-        id: pass-check
-        run: |
+          runid=$(jenkins-bridge-client -token ${{ secrets.BridgeToken }} -triggerAbicheck)"
+          jenkins-bridge-client wait -server $SERVER -token ${{ secrets.BridgeToken }} -runid $runid
           jenkins-bridge-client apipass -server $SERVER -token ${{ secrets.BridgeToken }} || echo "::set-output name=PASS_CODE::$?"
-      - name: Debug
-        run: |
-          echo ${{ steps.pass-check.outputs.PASS_CODE }}
-      - name: NotPass
+      - name: Check not pass 
         uses: actions/github-script@v6
         if: ${{ steps.pass-check.outputs.PASS_CODE }}  == "-1"
         with:
@@ -53,6 +44,7 @@ jobs:
               repo: context.repo.repo,
               labels: ['api changes']
             })
+            throw "Code has api changes, please submit for review"
       
       - name: cancelled post runs
         if: cancelled()
