@@ -13,6 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request_target'
     steps:
+      - name: Install Client
+        run: |
+          # Install Client
+          git clone https://github.com/linuxdeepin/jenkins-bridge-client.git jenkins-bridge-client
+          cd jenkins-bridge-client
+          go build .
+          sudo install -Dvm755 jenkins-bridge-client -t /usr/bin/
+          
       - name: Pre Check status
         id: pre-check
         run: jenkins-bridge-client apipass -server $SERVER -token ${{ secrets.BridgeToken }} || echo "::set-output name=PASS_CODE::$?"
@@ -21,11 +29,6 @@ jobs:
         if: ${{ steps.pre-check.outputs.PASS_CODE }}  == "-1"
         id: check
         run: |
-          # Install Client
-          git clone https://github.com/linuxdeepin/jenkins-bridge-client.git jenkins-bridge-client
-          cd jenkins-bridge-client
-          go build .
-          sudo install -Dvm755 jenkins-bridge-client -t /usr/bin/
           # Run API Check
           runid=$(jenkins-bridge-client -token ${{ secrets.BridgeToken }} -triggerAbicheck)
           jenkins-bridge-client wait -server $SERVER -token ${{ secrets.BridgeToken }} -runid $runid
