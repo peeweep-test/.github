@@ -13,7 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request_target'
     steps:
+      - name: Pre Check status
+        id: pre-check
+        run: jenkins-bridge-client apipass -server $SERVER -token ${{ secrets.BridgeToken }} || echo "::set-output name=PASS_CODE::$?"
+        
       - name: Check api
+        if: ${{ steps.pre-check.outputs.PASS_CODE }}  == "-1"
         id: check
         run: |
           # Install Client
@@ -28,7 +33,7 @@ jobs:
           
       - name: If check not pass 
         uses: actions/github-script@v6
-        if: ${{ steps.check.outputs.PASS_CODE }}  == "-1"
+        if: ${{ steps.pre-check.outputs.PASS_CODE }}  == "-1" && ${{ steps.check.outputs.PASS_CODE }}  == "-1"
         with:
           script: |
             github.rest.issues.addLabels({
