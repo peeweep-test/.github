@@ -27,7 +27,7 @@ jobs:
         id: pre-check
         run: |
           jenkins-bridge-client apipass -server $SERVER -token ${{ secrets.BridgeToken }}
-          passCode = $?
+          passCode=$?
           echo "::set-output name=PASS_CODE::$passCode"
           echo PASS_CODE::$passCode
 
@@ -38,7 +38,7 @@ jobs:
           runid=$(jenkins-bridge-client -token ${{ secrets.BridgeToken }} -triggerAbicheck)
           jenkins-bridge-client wait -server $SERVER -token ${{ secrets.BridgeToken }} -runid $runid
           jenkins-bridge-client apipass -server $SERVER -token ${{ secrets.BridgeToken }}
-          passCode = $?
+          passCode=$?
           echo "::set-output name=PASS_CODE::$passCode"
           echo PASS_CODE::$passCode
           jenkins-bridge-client cat -server $SERVER -token ${{ secrets.BridgeToken }} -file api_check.txt -runid $runid
