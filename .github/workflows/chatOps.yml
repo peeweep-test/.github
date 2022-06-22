@@ -96,7 +96,7 @@ jobs:
               repo: context.repo.repo,
               ref: pull.data.head.sha,
             });
-            console.log("list suite", resp)
+            console.log("list suite", resp.data.check_suites)
             const suite = resp.data.check_suites[resp.data.check_suites.length-1]
 
             if(!checkNameGroup) {
