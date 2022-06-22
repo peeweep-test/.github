@@ -96,6 +96,7 @@ jobs:
               repo: context.repo.repo,
               ref: pull.data.head.sha,
             });
+            console.log("list suite", resp)
             const suite = resp.data.check_suites[resp.data.check_suites.length-1]
 
             if(!checkNameGroup) {
@@ -113,6 +114,7 @@ jobs:
               repo: context.repo.repo,
               check_suite_id: suite.id,
             });
+            console.log("list resp",listResp)
             for(const run of listResp.data.check_runs){
               const name = run.name.replace(/ \/ /g,'/')
               if(name.includes(checkNameGroup[1])){
