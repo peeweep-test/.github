@@ -99,6 +99,7 @@ jobs:
             const suite = resp.data.check_suites[resp.data.check_suites.length-1]
 
             if(!checkNameGroup) {
+              console.log("re-run all check")
               await github.rest.checks.rerequestSuite({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -107,6 +108,7 @@ jobs:
               return
             }
 
+            console.log(`re-run [${checkNameGroup[1]}] check`)
             const listResp = await github.rest.checks.listForSuite({
               owner: context.repo.owner,
               repo: context.repo.repo,
