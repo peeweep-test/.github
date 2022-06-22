@@ -108,7 +108,6 @@ jobs:
               return
             }
 
-            console.log(`re-run [${checkNameGroup[1]}] check`)
             const listResp = await github.rest.checks.listForSuite({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -117,6 +116,7 @@ jobs:
             for(const run of listResp.data.check_runs){
               const name = run.name.replace(/ \/ /g,'/')
               if(name.includes(checkNameGroup[1])){
+                console.log(`re-run [${name}] check`)
                 await github.request(`POST /repos/${context.repo.owner}/${context.repo.repo}/actions/jobs/${run.id}/rerun`);
               }
             }
