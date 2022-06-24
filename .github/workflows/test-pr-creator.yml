@@ -1,0 +1,16 @@
+name: test_pr_creator
+on: pull_request_target
+
+jobs:
+  my_job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            const result = await github.rest.teams.getMembershipForUserInOrg({
+              org: context.repo.owner,
+              team_slug: 'debian-reviewer',
+              username: context.payload.issue.user.id
+            })
+            console.log(result)
