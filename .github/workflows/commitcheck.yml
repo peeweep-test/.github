@@ -10,11 +10,5 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download commitlint config teamplate
-        run: |
-          wget https://raw.githubusercontent.com/peeweep-test/supersm/test-commitlint/commitlint.config.js \
-            -O ./commitlint.config.js
+      - uses: peeweep-test/action-conventionalcommits-checker@master
 
-      - uses: wagoid/commitlint-github-action@v4
-        with:
-          configFile: "./commitlint.config.js"
