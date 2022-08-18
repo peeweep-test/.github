@@ -51,7 +51,7 @@ jobs:
             
             
       - name: Sync changed configs
-        uses: myml/action-sync@bete
+        uses: myml/action-sync@bate
         if: steps.changed-configs.outputs.any_changed == 'true'
         with:
           files: "${{ steps.changed-configs.outputs.all_changed_files }}"
