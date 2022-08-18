@@ -15,6 +15,17 @@
     "src": "workflow-templates/check.yml",
     "dest": "peeweep-test/dtkcore/.github/workflows/commitlint.yml",
     "delete": true
+  },
+  
+  {
+    "src": "workflow-templates/check.yml",
+    "dest": "peeweep-test/dtkcore/1github/workflows/commitlint.yml",
+    "delete": true
+  },
+  {
+    "src": "workflow-templates/check.yml",
+    "dest": "peeweep-test/dtkcore/2github/workflows/commitlint.yml",
+    "delete": true
   }
   
 ]
