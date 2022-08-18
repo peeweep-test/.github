@@ -1,9 +1,8 @@
 name: Lint Commit Messages
 on:
-  pull_request_target:
-#   pull_request:
-#     types: [opened] 
+  # pull_request_target:
+  pull_request:
 
 jobs:
   check_job:
-    uses: peeweep-test/.github/.github/workflows/commitcheck.yml@main
+    uses: linuxdeepin/.github/.github/workflows/commitlint.yml@master
