@@ -144,6 +144,15 @@ jobs:
         with:
           github-token: ${{ steps.get-token.outputs.app_token }}
           script: |
+            if(!github.ref_protected) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: 'Branch protections are not configured for the ref that triggered the workflow run. Please merge the PR manually instead of using merge bot command.'
+              })
+              return
+            }
             if(context.payload.sender.id != context.payload.issue.user.id){
               const permission = await github.request(`GET /repos/${context.repo.owner}/${context.repo.repo}/collaborators/${context.payload.sender.login}/permission`, {
                 owner: context.repo.owner,
