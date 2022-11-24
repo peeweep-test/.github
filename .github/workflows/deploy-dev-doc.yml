@@ -8,7 +8,14 @@ defaults:
     shell: bash
 
 jobs:
-  build:
+  deploy-dev-doc:
+    container:
+      image: linuxdeepin/apricot:latest
+      options: --privileged
+      volumes:
+        - /sys/fs/cgroup:/sys/fs/cgroup
+        - /etc/machine-id:/etc/machine-id
+
     runs-on: ubuntu-latest
     steps:
       - name: init base environment
