@@ -8,7 +8,7 @@ defaults:
     shell: bash
 
 jobs:
-  deploy-dev-doc:
+  build:
     container:
       image: linuxdeepin/apricot:latest
       options: --privileged
