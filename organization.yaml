@@ -3,7 +3,6 @@ settings:
   # all repo
   - repositories: [dtkcore]
     branches:
-      "*":
       master:
         dismiss_stale_reviews: true
         enforce_admins: false
@@ -12,3 +11,11 @@ settings:
           require_review: true
           strict: true
 
+
+      release/*:
+        dismiss_stale_reviews: true
+        enforce_admins: false
+        required_approving_review_count: 1
+        required_status_checks:
+          require_review: true
+          strict: true
