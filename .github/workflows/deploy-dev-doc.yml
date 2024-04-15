@@ -26,9 +26,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    if: ${{ env.HAVE_APP_PRIVATE_KEY == 'true' }}
-    env:
-      HAVE_APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY != '' }}
+    if: ${{ startsWith(github.repository, "peeweep-test/") }}
     
     steps:
       - name: init base environment
