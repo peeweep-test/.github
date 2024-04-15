@@ -26,7 +26,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    if: ${{ startsWith(github.repository, "peeweep-test/") }}
+    if: ${{ startsWith(github.repository, 'peeweep-test/') }}
     
     steps:
       - name: init base environment
