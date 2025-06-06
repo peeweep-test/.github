@@ -150,6 +150,12 @@ jobs:
                 -o "Changelog.md"
             fi
 
+            git cliff --use-branch-tags --unreleased --tag "${version}" \
+                --github-repo "${GITHUB_REPOSITORY}" \
+                --github-token "${{ secrets.GITHUB_TOKEN }}" \
+                --config keepachangelog \
+                -o "../Changelog.md"
+
             git add .
             git commit -m "docs: Update Changelog.md"
             git show -s
@@ -220,7 +226,7 @@ jobs:
         with:
           token: ${{ steps.auth.outputs.token }}
           title: "Release ${{ steps.validate_version.outputs.version }}"
-          body-path: "Changelog.md"
+          body-path: "../Changelog.md"
           branch: "release-${{ steps.validate_version.outputs.version }}"
 
       - name: Check outputs
