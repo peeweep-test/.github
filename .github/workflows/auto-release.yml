@@ -14,6 +14,11 @@ on:
         description: 'The email of the person to release the version'
         required: false
         type: string
+      timezone:
+        description: 'The timezone in the debian changelog file'
+        required: false
+        type: string
+        default: 'Asia/Shanghai'
 
 jobs:
   # 生成变更日志
@@ -160,7 +165,7 @@ jobs:
                 echo "为Debian生成版本更新……"
                 
                 # 获取当前日期时间
-                current_date=$(date -R)
+                current_date=$(TZ=${{ inputs.timezone }} date -R)
                 
                 # 创建新的changelog条目
                 new_entry="${repo_name} (${version}) unstable; urgency=medium
