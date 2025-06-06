@@ -131,13 +131,13 @@ jobs:
                 fi
             done
 
-            echo "正在生成 Changelog.md ……"
-            if [ -f "Changelog.md" ]; then
+            echo "正在生成 CHANGELOG.md ……"
+            if [ -f "CHANGELOG.md" ]; then
                 git cliff --use-branch-tags --unreleased --tag "${version}" \
                   --github-repo "${GITHUB_REPOSITORY}" \
                   --github-token "${{ secrets.GITHUB_TOKEN }}" \
                   --config keepachangelog \
-                  --prepend "Changelog.md"
+                  --prepend "CHANGELOG.md"
             else
                 git cliff --use-branch-tags --unreleased --tag "${version}" \
                 --github-repo "${GITHUB_REPOSITORY}" \
@@ -204,7 +204,7 @@ jobs:
         with:
           token: ${{ steps.auth.outputs.token }}
           title: "Release ${{ steps.validate_version.outputs.version }}"
-          body-path: "../Changelog.md"
+          body-path: "../CHANGELOG.md"
           branch: "release-${{ steps.validate_version.outputs.version }}"
 
       - name: Check outputs
