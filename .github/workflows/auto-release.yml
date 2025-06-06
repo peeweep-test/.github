@@ -33,7 +33,7 @@ jobs:
             echo "无效的版本号格式，请使用语义化版本号: $version" >&2
             exit 1
           fi
-          version=$(echo "$version" | sed 's/^v//')
+          version=${version#v}
           echo "version=${version}" >> $GITHUB_OUTPUT
       
       - name: 使用 GitHub App 进行身份验证
@@ -103,10 +103,7 @@ jobs:
       - name: 生成变更日志
         run: |
 
-            # 获取第一条提交的hash和消息
-            release_commit_hash=$(git rev-parse HEAD)
             version=${{ steps.validate_version.outputs.version }}
-            echo "提交hash: $release_commit_hash"
 
             # 获取发布者名称和邮箱
             author_name="${{ steps.setup_user_info.outputs.author_name }}"
@@ -117,7 +114,7 @@ jobs:
                 repo_name=$(basename "$GITHUB_REPOSITORY")
             else
                 # 本地环境回退方案
-                repo_name=$(basename $(git rev-parse --show-toplevel))
+                repo_name=$(basename "$(git rev-parse --show-toplevel)")
             fi
 
             # 配置git
@@ -140,17 +137,15 @@ jobs:
 
             echo "正在生成 Changelog.md ……"
             if [ -f "Changelog.md" ]; then
-                git cliff --use-branch-tags --unreleased --tag ${version} \
+                git cliff --use-branch-tags --unreleased --tag "${version}" \
                   --github-repo "${GITHUB_REPOSITORY}" \
                   --github-token "${{ secrets.GITHUB_TOKEN }}" \
-                  --skip-commit ${release_commit_hash} \
                   --config keepachangelog \
                   --prepend "Changelog.md"
             else
-                git cliff --use-branch-tags --unreleased --tag ${version} \
+                git cliff --use-branch-tags --unreleased --tag "${version}" \
                 --github-repo "${GITHUB_REPOSITORY}" \
                 --github-token "${{ secrets.GITHUB_TOKEN }}" \
-                --skip-commit ${release_commit_hash} \
                 --config keepachangelog \
                 -o "Changelog.md"
             fi
@@ -207,10 +202,10 @@ jobs:
                 echo "正在更新 RPM spec 文件版本号……"
                 
                 # 更新版本号
-                sed -i "s/^Version:.*/Version: ${version}/" rpm/${repo_name}.spec
+                sed -i "s/^Version:.*/Version: ${version}/" rpm/"${repo_name}".spec
                 
                 # 重置 Release 为 1
-                sed -i "s/^Release:.*/Release: 1/" rpm/${repo_name}.spec
+                sed -i "s/^Release:.*/Release: 1/" rpm/"${repo_name}".spec
                 
                 git add .
                 git commit -m "chore(rpm): New release ${version}"
