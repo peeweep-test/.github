@@ -71,6 +71,9 @@ jobs:
           # 设置用户名
           if [ -z "$input_name" ]; then
             author_name="${{ steps.actor_name.outputs.name }}"
+            if [ -z "$author_name" ]; then
+              author_name="${{ github.actor }}"
+            fi
             echo "未提供用户名，使用 GitHub 用户名: $author_name"
           else
             author_name="$input_name"
