@@ -169,21 +169,11 @@ jobs:
             if [ -d "debian" ]; then
                 echo "为Debian生成版本更新……"
                 
-                # 获取当前日期时间
-                current_date=$(TZ=${{ inputs.timezone }} date -R)
+                sudo apt-get update && sudo apt-get install -y devscripts
+                export DEBFULLNAME="${author_name}"
+                export DEBEMAIL="${author_email}"
                 
-                # 创建新的changelog条目
-                new_entry="${repo_name} (${version}) unstable; urgency=medium
-
-              * Release ${version}
-
-             -- ${author_name} <${author_email}>  ${current_date}
-            "
-                
-                # 将新条目添加到changelog开头
-                echo "${new_entry}" > debian/changelog.tmp
-                cat debian/changelog >> debian/changelog.tmp
-                mv debian/changelog.tmp debian/changelog
+                dch --newversion "${version}" --distribution unstable "Release ${version}"
             fi
 
             if [ -f "archlinux/PKGBUILD" ]; then
@@ -196,11 +186,11 @@ jobs:
                 sed -i "s/^pkgrel=.*/pkgrel=1/" archlinux/PKGBUILD
             fi
 
-            if [ -f "rpm/${repo_name}.spec" ]; then
+            if [ -f "rpm/*.spec" ]; then
                 echo "正在更新 RPM spec 文件版本号……"
                 
                 # 更新版本号
-                sed -i -E "s/^(Version:[[:space:]]*)[0-9].*/\1${version}/" rpm/"${repo_name}".spec
+                sed -i -E "s/^(Version:[[:space:]]*)[0-9].*/\1${version}/" rpm/*.spec
             fi
                             
             git add .
