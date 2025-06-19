@@ -57,6 +57,7 @@ jobs:
       - name: 获取触发者的 GitHub 邮箱
         id: get_email
         uses: evvanErb/get-github-email-by-username-action@v1.25
+        continue-on-error: true
         with:
           github-username: ${{ github.actor }}
           token: ${{ steps.auth.outputs.token }}
@@ -199,10 +200,7 @@ jobs:
                 echo "正在更新 RPM spec 文件版本号……"
                 
                 # 更新版本号
-                sed -i "s/^Version:.*/Version: ${version}/" rpm/"${repo_name}".spec
-                
-                # 重置 Release 为 1
-                sed -i "s/^Release:.*/Release: 1/" rpm/"${repo_name}".spec
+                sed -i -E "s/^(Version:[[:space:]]*)[0-9].*/\1${version}/" rpm/"${repo_name}".spec
             fi
                             
             git add .
