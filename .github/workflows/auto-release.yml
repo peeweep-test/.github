@@ -170,6 +170,7 @@ jobs:
                 echo "为Debian生成版本更新……"
                 
                 sudo apt-get update && sudo apt-get install -y devscripts
+                export TZ="${{ github.event.inputs.timezone }}"
                 export DEBFULLNAME="${author_name}"
                 export DEBEMAIL="${author_email}"
                 
