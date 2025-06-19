@@ -25,6 +25,20 @@ jobs:
   create_changelog:
     runs-on: ubuntu-latest
     steps:
+      - name: 使用 GitHub App 进行身份验证
+        id: auth
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID}}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.auth.outputs.token }}
+
       - name: 验证语义化版本号
         id: validate_version
         run: |
@@ -67,14 +81,6 @@ jobs:
           version=${version#v}
 
           echo "version=${version}" >> $GITHUB_OUTPUT
-      
-      - name: 使用 GitHub App 进行身份验证
-        id: auth
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID}}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
 
       - name: 获取 actor 的昵称
         id: actor_name
@@ -134,12 +140,6 @@ jobs:
           echo "author_email=${author_email}" >> $GITHUB_OUTPUT
           
           echo "最终用户信息: $author_name <$author_email>"
-
-      - name: 检出代码
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ steps.auth.outputs.token }}
 
       - name: Install git-cliff from crates.io
         uses: baptiste0928/cargo-install@v3
