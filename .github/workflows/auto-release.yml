@@ -3,7 +3,7 @@ on:
   workflow_call:
     inputs:
       version:
-        description: 'Release version (e.g., 1.0.0)'
+        description: 'Release version (e.g., 1.0.0), keep empty to auto-increment from VERSION file'
         required: false
         type: string
       name:
