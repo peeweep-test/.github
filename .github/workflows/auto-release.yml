@@ -219,8 +219,6 @@ jobs:
                     if [ -f "$file" ]; then
                         echo "处理文件: $file"
                         sed -i -E "s/^(Version:[[:space:]]*)[0-9].*/\1${version}/" "$file"
-                        # 替换 @version@ 为实际版本号
-                        sed "s/@version@/${version}/g" "$file" > "$file"
                         echo "生成文件: ${file}"
                     fi
                 done
