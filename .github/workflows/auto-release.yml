@@ -230,9 +230,13 @@ jobs:
                 chmod +x version.sh
                 ./version.sh ${version}
             fi
+
+            echo "
+            ---
+            This PR is triggered by @${{ github.actor }}" >> ../CHANGELOG.md
                             
             git add .
-            git commit -m "chore(rpm): New release ${version}
+            git commit -m "chore: New release ${version}
             
             Log:"
             git show -s
