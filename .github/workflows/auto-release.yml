@@ -224,6 +224,12 @@ jobs:
                 done
                 popd
             fi
+
+            if [ -f "version.sh" ]; then
+                echo "发现自定义 version.sh 文件，正在执行……"
+                chmod +x version.sh
+                ./version.sh ${version}
+            fi
                             
             git add .
             git commit -m "chore(rpm): New release ${version}
