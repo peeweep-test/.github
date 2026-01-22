@@ -59,3 +59,15 @@ jobs:
       - name: Check and Reflect Status
         if: steps.rcheck.outcome != 'success' || steps.zhrcheck.outcome != 'success'
         run: exit 1
+  Check-SPDX-Copyright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: zccrs/github-actions-spdx-checker@v1
+        with:
+          base: origin/master
+          include: '*.py,*.js,*.jsx,*.tsx,*.java,*.cpp,*.c,*.h,*.hpp,*.go,*.rs,*.rb,*.php,*.sh,*.xml,*.yaml,*.yml,*.qml,CMakeLists.txt,Makefile'
+          exclude: 'vendor/**,node_modules/**'
+          holder: '*UnionTech*'
