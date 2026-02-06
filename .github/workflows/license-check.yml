@@ -24,6 +24,12 @@ jobs:
         env:
           PIPX_DEFAULT_PYTHON: ${{ steps.python.outputs.python-path }}
 
+      - name: Download Copyright Check Script
+        run: |
+          mkdir -p .github/scripts
+          # 请将 org-test 替换为你真实的组织/仓库名
+          curl -sSfL https://raw.githubusercontent.com/peeweep-test/.github/main/.github/scripts/check_copyright.py -o .github/scripts/check_copyright.py
+
       - name: Check Copyright Year for Changed Files
         id: year_check
         env:
