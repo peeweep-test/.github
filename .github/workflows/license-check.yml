@@ -2,7 +2,7 @@ name: License and README Check
 on: workflow_call
 
 jobs:
-Check-License:
+  Check-License:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
