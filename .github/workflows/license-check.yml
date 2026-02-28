@@ -115,3 +115,5 @@ jobs:
           include: '*.py,*.js,*.jsx,*.tsx,*.java,*.cpp,*.c,*.h,*.hpp,*.go,*.rs,*.rb,*.php,*.sh,*.xml,*.yaml,*.yml,*.qml,CMakeLists.txt,Makefile'
           exclude: 'vendor/**,node_modules/**'
           holder: '*UnionTech*'
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
