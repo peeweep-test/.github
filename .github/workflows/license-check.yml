@@ -108,6 +108,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: peeweep-test/github-actions-spdx-checker@fix-head
         with:
