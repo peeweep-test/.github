@@ -257,7 +257,7 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ steps.app_token.outputs.token }}
-          branch: changelog/${{ steps.prepare.outputs.safe_version }}
+          branch: automation/update-changelog/${{ steps.prepare.outputs.safe_version }}
           title: "chore: update changelog to ${{ steps.prepare.outputs.version }}"
           commit-message: "chore: update changelog to ${{ steps.prepare.outputs.version }}"
           body: |
