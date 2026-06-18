@@ -20,7 +20,7 @@ on:
       create_pr:
         description: "Create a pull request after generating changelog"
         required: false
-        default: false
+        default: true
         type: boolean
   workflow_call:
     inputs:
