@@ -7,6 +7,14 @@ on:
         description: "Target version; leave empty to auto bump from debian/changelog"
         required: false
         type: string
+      name:
+        description: "Maintainer name used in debian/changelog"
+        required: true
+        type: string
+      email:
+        description: "Maintainer email used in debian/changelog"
+        required: true
+        type: string
       base_branch:
         description: "Base branch to read and target"
         required: false
@@ -26,6 +34,12 @@ on:
     inputs:
       version:
         required: false
+        type: string
+      name:
+        required: true
+        type: string
+      email:
+        required: true
         type: string
       base_branch:
         required: false
@@ -219,8 +233,8 @@ jobs:
           VERSION: ${{ steps.prepare.outputs.version }}
           DISTRIBUTION: ${{ steps.prepare.outputs.distribution }}
           TITLES_JSON: ${{ steps.prepare.outputs.titles_json }}
-          DEBFULLNAME: Deepin CI
-          DEBEMAIL: deepin-ci@deepin.org
+          DEBFULLNAME: ${{ inputs.name }}
+          DEBEMAIL: ${{ inputs.email }}
           TZ: Asia/Shanghai
         run: |
           import json
