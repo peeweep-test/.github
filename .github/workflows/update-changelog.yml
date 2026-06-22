@@ -116,6 +116,7 @@ jobs:
           import pathlib
           import re
           import subprocess
+          import urllib.error
           import urllib.parse
           import urllib.request
 
@@ -162,11 +163,19 @@ jobs:
                   "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
               }
               req = urllib.request.Request(url, headers=headers)
-              with urllib.request.urlopen(req, timeout=30) as resp:
-                  body = resp.read().decode("utf-8")
-                  data = json.loads(body) if body else None
-                  resp_headers = {k.lower(): v for k, v in resp.headers.items()}
-                  return data, resp_headers
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as resp:
+                      body = resp.read().decode("utf-8")
+                      data = json.loads(body) if body else None
+                      resp_headers = {k.lower(): v for k, v in resp.headers.items()}
+                      return data, resp_headers
+              except urllib.error.HTTPError as exc:
+                  body = exc.read().decode("utf-8", errors="replace")
+                  if len(body) > 2000:
+                      body = body[:2000] + "...<truncated>"
+                  raise RuntimeError(
+                      f"GitHub API request failed: status={exc.code}, url={url}, body={body}"
+                  ) from exc
 
           def parse_link_header(value):
               links = {}
