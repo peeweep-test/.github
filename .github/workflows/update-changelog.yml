@@ -90,7 +90,7 @@ jobs:
           permission-pull-requests: write
 
       - name: Checkout base branch
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.base_branch }}
           fetch-depth: 1
