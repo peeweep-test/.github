@@ -151,7 +151,10 @@ jobs:
                   value = value.rsplit("-", 1)[0]
               parts = value.split(".")
               if len(parts) < 2 or any(not part.isdigit() for part in parts):
-                  raise RuntimeError(f"unsupported version format: {version}")
+                  raise RuntimeError(
+                      "cannot auto bump complex Debian version "
+                      f"{version!r}; pass the workflow input 'version' explicitly"
+                  )
               parts[-1] = str(int(parts[-1]) + 1)
               return epoch + ".".join(parts)
 
@@ -281,8 +284,13 @@ jobs:
         with:
           token: ${{ steps.app_token.outputs.token }}
           branch: automation/update-changelog/${{ steps.prepare.outputs.safe_version }}
-          title: "chore: update changelog to ${{ steps.prepare.outputs.version }}"
-          commit-message: "chore: update changelog to ${{ steps.prepare.outputs.version }}"
+          title: "chore: bump version to ${{ steps.prepare.outputs.version }}"
+          commit-message: |
+            chore: bump version to ${{ steps.prepare.outputs.version }}
+
+            update changelog to ${{ steps.prepare.outputs.version }}
+
+            Log: update changelog to ${{ steps.prepare.outputs.version }}
           body: |
             Automated changelog update.
 
