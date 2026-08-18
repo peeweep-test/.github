@@ -279,14 +279,22 @@ jobs:
           version = os.environ["VERSION"].strip()
           repo_root = pathlib.Path(os.environ["GITHUB_WORKSPACE"])
 
-          def write_output(value):
-              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
-                  fh.write(f"files={value}\n")
+          def write_output(files):
+              if len(files) == 1:
+                  with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+                      fh.write(f"files={files[0]}\n")
+              else:
+                  delimiter = "CHANGELOGFILES"
+                  with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+                      fh.write(f"files<<{delimiter}\n")
+                      for item in files:
+                          fh.write(item + "\n")
+                      fh.write(delimiter + "\n")
 
           targets = sorted(repo_root.glob("linglong*.yaml"))
           if not targets:
               print("no linglong*.yaml found, skip")
-              write_output("debian/changelog")
+              write_output(["debian/changelog"])
               raise SystemExit(0)
 
           changed = []
@@ -324,9 +332,9 @@ jobs:
                   changed.append(path.name)
 
           if changed:
-              write_output("debian/changelog\n" + "\n".join(changed))
+              write_output(["debian/changelog"] + changed)
           else:
-              write_output("debian/changelog")
+              write_output(["debian/changelog"])
 
       - name: Show changelog diff
         if: ${{ !inputs.create_pr }}
