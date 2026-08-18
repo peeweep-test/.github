@@ -266,16 +266,80 @@ jobs:
           for title in titles[1:]:
               subprocess.run(["dch", "-a", title], check=True)
 
+      - name: Sync linglong.yaml version
+        id: sync_linglong
+        shell: python
+        env:
+          VERSION: ${{ steps.prepare.outputs.version }}
+        run: |
+          import os
+          import pathlib
+          import re
+
+          version = os.environ["VERSION"].strip()
+          repo_root = pathlib.Path(os.environ["GITHUB_WORKSPACE"])
+
+          def write_output(value):
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+                  fh.write(f"files={value}\n")
+
+          targets = sorted(repo_root.glob("linglong*.yaml"))
+          if not targets:
+              print("no linglong*.yaml found, skip")
+              write_output("debian/changelog")
+              raise SystemExit(0)
+
+          changed = []
+          for path in targets:
+              lines = path.read_text(encoding="utf-8").splitlines()
+              package_start = next(
+                  (i for i, line in enumerate(lines) if re.match(r"^package:\s*$", line)),
+                  None,
+              )
+              if package_start is None:
+                  print(f"skip {path}: no package block")
+                  continue
+
+              updated = False
+              for i, line in enumerate(lines):
+                  if i <= package_start:
+                      continue
+                  if re.match(r"^\S", line):
+                      break
+                  m = re.match(r"^(\s*version:\s*)(\S+)\s*$", line)
+                  if not m:
+                      continue
+                  old = m.group(2).strip()
+                  parts = old.split(".")
+                  new_val = version
+                  if len(parts) > 1 and parts[-1].isdigit():
+                      new_val = f"{version}.{parts[-1]}"
+                  if new_val != old:
+                      lines[i] = m.group(1) + new_val
+                      updated = True
+                      print(f"bump {path} version: {old} -> {new_val}")
+
+              if updated:
+                  path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+                  changed.append(path.name)
+
+          if changed:
+              write_output("debian/changelog\n" + "\n".join(changed))
+          else:
+              write_output("debian/changelog")
+
       - name: Show changelog diff
         if: ${{ !inputs.create_pr }}
-        run: git diff -- debian/changelog
+        run: git diff -- debian/changelog linglong*.yaml
 
       - name: Upload generated changelog
         if: ${{ !inputs.create_pr }}
         uses: actions/upload-artifact@v4
         with:
           name: generated-changelog
-          path: debian/changelog
+          path: |
+            debian/changelog
+            linglong*.yaml
 
       - name: Create pull request
         id: create_pr
@@ -298,8 +362,7 @@ jobs:
             - Base branch: `${{ steps.prepare.outputs.base_branch }}`
             - Base changelog commit: `${{ steps.prepare.outputs.base_sha }}`
             - Head commit: `${{ steps.prepare.outputs.head_sha }}`
-          add-paths: |
-            debian/changelog
+          add-paths: ${{ steps.sync_linglong.outputs.files }}
           delete-branch: true
 
       - name: Show pull request result
