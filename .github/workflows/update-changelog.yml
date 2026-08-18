@@ -232,6 +232,7 @@ jobs:
           safe_version = re.sub(r"[^A-Za-z0-9._-]+", "-", version).strip("-")
 
           output_line("version", version)
+          output_line("current_version", current_version)
           output_line("safe_version", safe_version)
           output_line("distribution", distribution)
           output_line("base_branch", base_branch)
@@ -271,12 +272,14 @@ jobs:
         shell: python
         env:
           VERSION: ${{ steps.prepare.outputs.version }}
+          CURRENT_VERSION: ${{ steps.prepare.outputs.current_version }}
         run: |
           import os
           import pathlib
           import re
 
           version = os.environ["VERSION"].strip()
+          current_version = os.environ["CURRENT_VERSION"].strip()
           repo_root = pathlib.Path(os.environ["GITHUB_WORKSPACE"])
 
           def write_output(files):
@@ -290,6 +293,13 @@ jobs:
                       for item in files:
                           fh.write(item + "\n")
                       fh.write(delimiter + "\n")
+
+          def strip_epoch(value):
+              if ":" in value:
+                  _, value = value.split(":", 1)
+              return value
+
+          current_base = strip_epoch(current_version)
 
           targets = sorted(repo_root.glob("linglong*.yaml"))
           if not targets:
@@ -318,10 +328,17 @@ jobs:
                   if not m:
                       continue
                   old = m.group(2).strip()
-                  parts = old.split(".")
-                  new_val = version
-                  if len(parts) > 1 and parts[-1].isdigit():
+                  old_base = strip_epoch(old)
+                  parts = old_base.split(".")
+                  new_val = old
+                  if (
+                      len(parts) > 1
+                      and parts[-1].isdigit()
+                      and ".".join(parts[:-1]) == current_base
+                  ):
                       new_val = f"{version}.{parts[-1]}"
+                  elif old_base == current_base:
+                      new_val = version
                   if new_val != old:
                       lines[i] = m.group(1) + new_val
                       updated = True
