@@ -141,11 +141,13 @@ jobs:
                   raise RuntimeError("PR 提交已变化，请等待新提交的检查")
               query = urlencode({"per_page": 100})
               related = api(f"repos/{repo}/commits/{os.environ['PR_HEAD_SHA']}/pulls?{query}")
-              for other in related:
-                  if (other["state"] == "open" and other["head"]["sha"] == os.environ["PR_HEAD_SHA"]
-                          and other["number"] != pr["number"]):
-                      check(repo, other)
-              print(check(repo, pr))
+              open_prs = [p for p in related
+                          if p["state"] == "open" and p["head"]["sha"] == os.environ["PR_HEAD_SHA"]]
+              if not any(p["number"] == pr["number"] for p in open_prs) and pr["state"] == "open":
+                  open_prs.append(pr)
+              for item in open_prs:
+                  check(repo, item)
+              print(f"同提交开放 PR 校验通过: {len(open_prs)}")
 
           if __name__ == "__main__":
               main()
