@@ -12,7 +12,7 @@ jobs:
     name: Verify group version
     runs-on: ubuntu-latest
     concurrency:
-      group: group-version-guard-${{ github.event.pull_request.number }}
+      group: group-version-guard-${{ github.event.pull_request.head.sha }}
       cancel-in-progress: false
     env:
       GH_TOKEN: ${{ github.token }}
@@ -114,11 +114,17 @@ jobs:
               if (release["base_branch"] != default
                       or [m["repo"] for m in release["members"]] != repo_names(cfg, group, owner)):
                   raise RuntimeError("DDE 本轮成员或目标分支已改变，请先核实原发布")
-              if subprocess.run(["dpkg", "--compare-versions", release["version"], "ge",
-                                 cfg["groups"][group]["version"]]).returncode:
-                  raise RuntimeError("DDE 发布记录已过期，不能继续旧版本")
               member = next(m for m in release["members"] if m["repo"] == repo)
-              target = release["version"]
+              baseline_version = cfg["groups"][group]["version"]
+              if "version" in member:
+                  baseline_version = baseline_version.split(":", 1)[-1]
+              if subprocess.run(["dpkg", "--compare-versions", release["version"], "ge", baseline_version]).returncode:
+                  raise RuntimeError("DDE 发布记录已过期，不能继续旧版本")
+              target = member.get("version", release["version"])
+              if subprocess.run(["dpkg", "--validate-version", target]).returncode:
+                  raise RuntimeError(f"无效成员目标版本: {target}")
+              if "version" in member and target.split(":", 1)[-1] != release["version"]:
+                  raise RuntimeError("成员目标版本与组版本不符")
               safe = re.sub(r"[^A-Za-z0-9._-]+", "-", target).strip("-")
               branch = f"release-{target}" if group == "G1" else f"automation/update-changelog/{safe}"
               if (after != target or source["full_name"] != repo or pr["head"]["ref"] != branch
@@ -133,6 +139,12 @@ jobs:
               pr = api(f"repos/{repo}/pulls/{event['number']}")
               if pr["head"]["sha"] != os.environ["PR_HEAD_SHA"]:
                   raise RuntimeError("PR 提交已变化，请等待新提交的检查")
+              query = urlencode({"per_page": 100})
+              related = api(f"repos/{repo}/commits/{os.environ['PR_HEAD_SHA']}/pulls?{query}")
+              for other in related:
+                  if (other["state"] == "open" and other["head"]["sha"] == os.environ["PR_HEAD_SHA"]
+                          and other["number"] != pr["number"]):
+                      check(repo, other)
               print(check(repo, pr))
 
           if __name__ == "__main__":
@@ -144,7 +156,18 @@ jobs:
         env:
           VERIFY_OUTCOME: ${{ steps.verify.outcome }}
         run: |
-          if [ "$VERIFY_OUTCOME" = "success" ]; then
+          current_state=success
+          if [ "$VERIFY_OUTCOME" != "success" ]; then
+            current_state=failure
+          fi
+          for number in $(gh api "repos/$GITHUB_REPOSITORY/commits/$PR_HEAD_SHA/pulls?per_page=100" \
+              --jq ".[] | select(.state == \"open\" and .head.sha == \"$PR_HEAD_SHA\") | .number"); do
+            state="$(gh pr view "$number" --json state --jq .state)"
+            if [ "$state" != "open" ]; then
+              current_state=failure
+            fi
+          done
+          if [ "$current_state" = "success" ]; then
             state=success
             description='成员版本校验通过'
           else

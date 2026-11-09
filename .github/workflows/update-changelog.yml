@@ -86,6 +86,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
           permission-contents: write
           permission-pull-requests: write
 
@@ -299,6 +300,7 @@ jobs:
                   _, value = value.split(":", 1)
               return value
 
+          version = strip_epoch(version)
           current_base = strip_epoch(current_version)
 
           targets = sorted(repo_root.glob("linglong*.yaml"))

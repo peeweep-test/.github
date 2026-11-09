@@ -21,7 +21,7 @@ class VerifyGroupVersionTests(unittest.TestCase):
     def setUp(self):
         self.repo = 'linuxdeepin/go-lib'
         self.cfg = {'groups': {'G2': {'version': '6.0.49', 'members': ['go-lib']}}}
-        self.pr = {'created_at': '2026-11-05T10:01:00Z',
+        self.pr = {'number': 1, 'created_at': '2026-11-05T10:01:00Z',
                    'base': {'ref': 'master', 'sha': 'member-base'},
                    'head': {'ref': 'automation/update-changelog/6.0.50', 'sha': 'member-head',
                             'repo': {'full_name': self.repo}}}
@@ -211,6 +211,59 @@ class VerifyGroupVersionTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, '成员版本只能升版'):
             self.check()
 
+    def test_authorized_epoch_target_matches_frozen_member_record(self):
+        self.release['members'][0]['version'] = '1:6.0.50'
+        self.pr['head']['ref'] = 'automation/update-changelog/1-6.0.50'
+        self.versions['member-head'] = '1:6.0.50'
+        for current in ('1:6.0.15', '1:6.0.49'):
+            with self.subTest(current=current):
+                self.versions['member-base'] = current
+                self.assertIn('G2 本轮发布 1:6.0.50', self.check())
+        self.cfg['groups']['G2']['version'] = '6.0.50'
+        self.assertIn('发布记录一致', self.check())
+
+    def test_epoch_change_and_independent_next_version_are_blocked(self):
+        self.release['members'][0]['version'] = '1:6.0.50'
+        self.versions['member-base'] = '1:6.0.49'
+        for after, branch in (
+                ('6.0.50', 'automation/update-changelog/6.0.50'),
+                ('2:6.0.50', 'automation/update-changelog/2-6.0.50'),
+                ('1:6.0.51', 'automation/update-changelog/1-6.0.51'),
+                ('1:6.0.50', 'automation/update-changelog/6.0.50')):
+            with self.subTest(after=after, branch=branch):
+                self.versions['member-head'] = after
+                self.pr['head']['ref'] = branch
+                with self.assertRaises(RuntimeError):
+                    self.check()
+
+    def test_member_target_cannot_disagree_with_group_record(self):
+        self.release['members'][0]['version'] = '1:6.0.51'
+        self.versions.update({'member-base': '1:6.0.49', 'member-head': '1:6.0.51'})
+        self.pr['head']['ref'] = 'automation/update-changelog/1-6.0.51'
+        with self.assertRaisesRegex(RuntimeError, '成员目标版本与组版本不符'):
+            self.check()
+
+    def test_legacy_epoch_group_record_keeps_original_full_target(self):
+        self.release['version'] = '1:6.0.50'
+        self.versions.update({'member-base': '1:6.0.49', 'member-head': '1:6.0.50'})
+        self.pr['head']['ref'] = 'automation/update-changelog/1-6.0.50'
+        self.assertIn('G2 本轮发布 1:6.0.50', self.check())
+
+    def test_bare_group_release_can_follow_legacy_epoch_baseline(self):
+        self.release['version'] = '6.0.51'
+        self.release['members'][0]['version'] = '1:6.0.51'
+        self.pr['head']['ref'] = 'automation/update-changelog/1-6.0.51'
+        self.versions.update({'member-base': '1:6.0.50', 'member-head': '1:6.0.51'})
+        for current in ('1:6.0.50', '1:6.0.51', '6.0.51'):
+            with self.subTest(current=current):
+                self.cfg['groups']['G2']['version'] = current
+                self.assertIn('G2 本轮发布 1:6.0.51', self.check())
+        for current in ('1:6.0.52', '6.0.52'):
+            with self.subTest(current=current):
+                self.cfg['groups']['G2']['version'] = current
+                with self.assertRaisesRegex(RuntimeError, '发布记录已过期'):
+                    self.check()
+
     def test_trusted_workflow_and_status_cover_all_prs(self):
         caller = yaml.safe_load((ROOT / 'workflow-templates/call-verify-group-version.yml').read_text())
         events = caller.get('on', caller.get(True))
@@ -245,6 +298,46 @@ class VerifyGroupVersionTests(unittest.TestCase):
                     self.assertEqual(args[1], 'repos/linuxdeepin/go-lib/statuses/member-head')
                     self.assertIn('state=' + ('success' if outcome == 'success' else 'failure'), args)
                     self.assertIn('context=group-version-guard', args)
+
+    def test_same_head_sha_rechecks_all_open_prs_and_blocks_wrong_target(self):
+        wrong = {**copy.deepcopy(self.pr), 'number': 2, 'state': 'open',
+                 'base': {'ref': 'review/forbidden', 'sha': 'member-base'}}
+        original = self.ns['api']
+        def api_with_wrong_pr(path):
+            path_only = urlsplit(path).path
+            if path_only == f'repos/{self.repo}/pulls/1':
+                return self.pr
+            if path_only == f'repos/{self.repo}/commits/member-head/pulls':
+                return [wrong]
+            return original(path)
+        self.ns['api'] = api_with_wrong_pr
+        with patch.dict(os.environ, GITHUB_REPOSITORY=self.repo, GITHUB_EVENT_PATH='event.json',
+                        PR_HEAD_SHA='member-head'):
+            with patch('builtins.open', mock_open(read_data=json.dumps({'number': 1}))):
+                with self.assertRaisesRegex(RuntimeError, '不属于 G2 本轮'):
+                    self.ns['main']()
+        self.calls.append(f'repos/{self.repo}/commits/member-head/pulls?per_page=100')
+
+    def test_shared_sha_status_is_failure_when_any_open_pr_is_closed(self):
+        step = WORKFLOW['jobs']['verify']['steps'][-1]
+        with tempfile.TemporaryDirectory() as directory:
+            gh = Path(directory) / 'gh'
+            log = Path(directory) / 'calls.json'
+            gh.write_text('#!/usr/bin/env python3\nimport json, os, pathlib, sys\n'
+                          'pathlib.Path(os.environ["TEST_GH_LOG"]).write_text(json.dumps(sys.argv[1:]))\n'
+                          'if sys.argv[1] == "api":\n'
+                          '    print("1")\n'
+                          'elif sys.argv[1] == "pr" and sys.argv[2] == "view":\n'
+                          '    print(os.environ["REVIEW_PR_STATE"])\n')
+            gh.chmod(0o755)
+            env = {**os.environ, 'PATH': directory + os.pathsep + os.environ['PATH'],
+                   'TEST_GH_LOG': str(log), 'VERIFY_OUTCOME': 'success',
+                   'GITHUB_REPOSITORY': self.repo, 'PR_HEAD_SHA': 'member-head',
+                   'GITHUB_SERVER_URL': 'https://github.com', 'GITHUB_RUN_ID': '1',
+                   'REVIEW_PR_STATE': 'closed'}
+            subprocess.run(['bash', '-e', '-c', step['run']], env=env, check=True)
+            args = json.loads(log.read_text())
+            self.assertIn('state=failure', args)
 
 
 if __name__ == '__main__':

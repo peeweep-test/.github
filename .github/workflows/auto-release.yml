@@ -16,7 +16,7 @@ on:
         type: string
       timezone:
         description: 'The timezone in the debian changelog file'
-        required: true
+        required: false
         type: string
         default: 'Asia/Shanghai'
 
@@ -32,6 +32,7 @@ jobs:
           app-id: ${{ secrets.APP_ID}}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
 
       - name: 检出代码
         uses: actions/checkout@v5
@@ -41,8 +42,10 @@ jobs:
 
       - name: 验证语义化版本号
         id: validate_version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          version="${{ github.event.inputs.version }}"
+          version="$INPUT_VERSION"
 
           # 如果没有提供版本号，尝试从 VERSION 文件读取并自动递增
           if [ -z "$version" ]; then
@@ -102,16 +105,21 @@ jobs:
 
       - name: 检查并设置用户信息
         id: setup_user_info
+        env:
+          INPUT_NAME: ${{ inputs.name }}
+          INPUT_EMAIL: ${{ inputs.email }}
+          ACTOR_NAME: ${{ steps.actor_name.outputs.name }}
+          ACTOR_EMAIL: ${{ steps.get_email.outputs.email }}
         run: |
           # 检查是否提供了用户名和邮箱
-          input_name="${{ github.event.inputs.name }}"
-          input_email="${{ github.event.inputs.email }}"
+          input_name="$INPUT_NAME"
+          input_email="$INPUT_EMAIL"
           
           # 设置用户名
           if [ -z "$input_name" ]; then
-            author_name="${{ steps.actor_name.outputs.name }}"
+            author_name="$ACTOR_NAME"
             if [ -z "$author_name" ]; then
-              author_name="${{ github.actor }}"
+              author_name="$GITHUB_ACTOR"
             fi
             echo "未提供用户名，使用 GitHub 用户名: $author_name"
           else
@@ -122,7 +130,7 @@ jobs:
           # 设置邮箱
           if [ -z "$input_email" ]; then
             # 尝试从 GitHub API 获取邮箱
-            github_email="${{ steps.get_email.outputs.email }}"
+            github_email="$ACTOR_EMAIL"
             if [ -n "$github_email" ] && [ "$github_email" != "null" ] && [ "$github_email" != "" ]; then
               author_email="$github_email"
               echo "从 GitHub API 获取到邮箱: $author_email"
@@ -135,9 +143,13 @@ jobs:
             echo "使用提供的邮箱: $author_email"
           fi
           
+          if [[ "$author_name$author_email" == *$'\n'* || "$author_name$author_email" == *$'\r'* ]]; then
+            echo "姓名和邮箱不能包含换行" >&2
+            exit 1
+          fi
+
           # 输出到 GITHUB_OUTPUT
-          echo "author_name=${author_name}" >> $GITHUB_OUTPUT
-          echo "author_email=${author_email}" >> $GITHUB_OUTPUT
+          printf '%s\n' "author_name=$author_name" "author_email=$author_email" >> "$GITHUB_OUTPUT"
           
           echo "最终用户信息: $author_name <$author_email>"
 
@@ -147,13 +159,19 @@ jobs:
           crate: git-cliff
 
       - name: 生成变更日志
+        env:
+          VERSION: ${{ steps.validate_version.outputs.version }}
+          AUTHOR_NAME: ${{ steps.setup_user_info.outputs.author_name }}
+          AUTHOR_EMAIL: ${{ steps.setup_user_info.outputs.author_email }}
+          TZ: ${{ inputs.timezone }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
 
-            version=${{ steps.validate_version.outputs.version }}
+            version="$VERSION"
 
             # 获取发布者名称和邮箱
-            author_name="${{ steps.setup_user_info.outputs.author_name }}"
-            author_email="${{ steps.setup_user_info.outputs.author_email }}"
+            author_name="$AUTHOR_NAME"
+            author_email="$AUTHOR_EMAIL"
 
             # 获取仓库名 (GitHub Actions 环境)
             if [ -n "$GITHUB_REPOSITORY" ]; then
@@ -168,26 +186,26 @@ jobs:
             git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
             echo "正在更新源代码信息……"
-            echo ${version} > VERSION
+            echo "$version" > VERSION
 
             echo "正在生成 CHANGELOG.md ……"
             if [ -f "CHANGELOG.md" ]; then
                 git cliff --use-branch-tags --unreleased --tag "${version}" \
                   --github-repo "${GITHUB_REPOSITORY}" \
-                  --github-token "${{ secrets.GITHUB_TOKEN }}" \
+                  --github-token "$GITHUB_TOKEN" \
                   --config keepachangelog \
                   --prepend "CHANGELOG.md"
             else
                 git cliff --use-branch-tags --unreleased --tag "${version}" \
                 --github-repo "${GITHUB_REPOSITORY}" \
-                --github-token "${{ secrets.GITHUB_TOKEN }}" \
+                --github-token "$GITHUB_TOKEN" \
                 --config keepachangelog \
                 -o "CHANGELOG.md"
             fi
 
             git cliff --use-branch-tags --unreleased --tag "${version}" \
                 --github-repo "${GITHUB_REPOSITORY}" \
-                --github-token "${{ secrets.GITHUB_TOKEN }}" \
+                --github-token "$GITHUB_TOKEN" \
                 --config keepachangelog \
                 -o "../CHANGELOG.md"
 
@@ -195,7 +213,6 @@ jobs:
                 echo "为Debian生成版本更新……"
                 
                 sudo apt-get update && sudo apt-get install -y devscripts
-                export TZ="${{ github.event.inputs.timezone }}"
                 export DEBFULLNAME="${author_name}"
                 export DEBEMAIL="${author_email}"
                 
@@ -228,12 +245,12 @@ jobs:
             if [ -f "version.sh" ]; then
                 echo "发现自定义 version.sh 文件，正在执行……"
                 chmod +x version.sh
-                ./version.sh ${version}
+                ./version.sh "$version"
             fi
 
             echo "
             ---
-            This PR is triggered by @${{ github.actor }}" >> ../CHANGELOG.md
+            This PR is triggered by @$GITHUB_ACTOR" >> ../CHANGELOG.md
                             
             git add .
             git commit -m "chore: New release ${version}
@@ -252,6 +269,9 @@ jobs:
 
       - name: Check outputs
         if: ${{ steps.cpr.outputs.pull-request-number }}
+        env:
+          PR_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}
+          PR_URL: ${{ steps.cpr.outputs.pull-request-url }}
         run: |
-          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
-          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
+          echo "Pull Request Number - $PR_NUMBER"
+          echo "Pull Request URL - $PR_URL"
