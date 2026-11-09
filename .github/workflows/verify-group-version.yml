@@ -164,7 +164,7 @@ jobs:
           fi
           for number in $(gh api "repos/$GITHUB_REPOSITORY/commits/$PR_HEAD_SHA/pulls?per_page=100" \
               --jq ".[] | select(.state == \"open\" and .head.sha == \"$PR_HEAD_SHA\") | .number"); do
-            state="$(gh pr view "$number" -R "$GITHUB_REPOSITORY" --json state --jq .state)"
+            state="$(gh pr view "$number" -R "$GITHUB_REPOSITORY" --json state --jq .state | tr '[:upper:]' '[:lower:]')"
             if [ "$state" != "open" ]; then
               current_state=failure
             fi

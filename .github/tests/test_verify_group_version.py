@@ -340,6 +340,26 @@ class VerifyGroupVersionTests(unittest.TestCase):
             args = json.loads(log.read_text())
             self.assertIn('state=failure', args)
 
+    def test_shared_sha_status_accepts_open_pr_state_from_gh_cli(self):
+        step = WORKFLOW['jobs']['verify']['steps'][-1]
+        with tempfile.TemporaryDirectory() as directory:
+            gh = Path(directory) / 'gh'
+            log = Path(directory) / 'calls.json'
+            gh.write_text('#!/usr/bin/env python3\nimport json, os, pathlib, sys\n'
+                          'pathlib.Path(os.environ["TEST_GH_LOG"]).write_text(json.dumps(sys.argv[1:]))\n'
+                          'if sys.argv[1] == "api":\n'
+                          '    print("1")\n'
+                          'elif sys.argv[1] == "pr" and sys.argv[2] == "view":\n'
+                          '    print("OPEN")\n')
+            gh.chmod(0o755)
+            env = {**os.environ, 'PATH': directory + os.pathsep + os.environ['PATH'],
+                   'TEST_GH_LOG': str(log), 'VERIFY_OUTCOME': 'success',
+                   'GITHUB_REPOSITORY': self.repo, 'PR_HEAD_SHA': 'member-head',
+                   'GITHUB_SERVER_URL': 'https://github.com', 'GITHUB_RUN_ID': '1'}
+            subprocess.run(['bash', '-e', '-c', step['run']], env=env, check=True)
+            args = json.loads(log.read_text())
+            self.assertIn('state=success', args)
+
     def test_closed_pr_recomputes_only_remaining_open_prs(self):
         closed = {**copy.deepcopy(self.pr), 'number': 2, 'state': 'closed'}
         valid = {**copy.deepcopy(self.pr), 'state': 'open'}
