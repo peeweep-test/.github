@@ -21,7 +21,7 @@ class VerifyGroupVersionTests(unittest.TestCase):
     def setUp(self):
         self.repo = 'linuxdeepin/go-lib'
         self.cfg = {'groups': {'G2': {'version': '6.0.49', 'members': ['go-lib']}}}
-        self.pr = {'number': 1, 'created_at': '2026-11-05T10:01:00Z',
+        self.pr = {'number': 1, 'state': 'open', 'created_at': '2026-11-05T10:01:00Z',
                    'base': {'ref': 'master', 'sha': 'member-base'},
                    'head': {'ref': 'automation/update-changelog/6.0.50', 'sha': 'member-head',
                             'repo': {'full_name': self.repo}}}
@@ -269,6 +269,7 @@ class VerifyGroupVersionTests(unittest.TestCase):
         events = caller.get('on', caller.get(True))
         self.assertEqual(set(events), {'pull_request_target'})
         self.assertIn('edited', events['pull_request_target']['types'])
+        self.assertIn('closed', events['pull_request_target']['types'])
         self.assertNotIn('paths', events['pull_request_target'])
         self.assertEqual(caller['permissions'], {'contents': 'read', 'pull-requests': 'read', 'statuses': 'write'})
         self.assertEqual(caller['jobs']['verify']['uses'],
@@ -338,6 +339,23 @@ class VerifyGroupVersionTests(unittest.TestCase):
             subprocess.run(['bash', '-e', '-c', step['run']], env=env, check=True)
             args = json.loads(log.read_text())
             self.assertIn('state=failure', args)
+
+    def test_closed_pr_recomputes_only_remaining_open_prs(self):
+        closed = {**copy.deepcopy(self.pr), 'number': 2, 'state': 'closed'}
+        valid = {**copy.deepcopy(self.pr), 'state': 'open'}
+        original = self.ns['api']
+        def api_with_closed_pr(path):
+            path_only = urlsplit(path).path
+            if path_only == f'repos/{self.repo}/pulls/2':
+                return closed
+            if path_only == f'repos/{self.repo}/commits/member-head/pulls':
+                return [closed, valid]
+            return original(path)
+        self.ns['api'] = api_with_closed_pr
+        with patch.dict(os.environ, GITHUB_REPOSITORY=self.repo, GITHUB_EVENT_PATH='event.json',
+                        PR_HEAD_SHA='member-head'):
+            with patch('builtins.open', mock_open(read_data=json.dumps({'number': 2, 'action': 'closed'}))):
+                self.ns['main']()
 
 
 if __name__ == '__main__':
