@@ -13,8 +13,8 @@ concurrency:
 
 jobs:
   templates-sync:
-    # limit push on linuxdeepin/.github master branch
-    if: github.repository == 'linuxdeepin/.github' && github.ref == 'refs/heads/master'
+    # limit push on peeweep-test/.github main branch
+    if: github.repository == 'peeweep-test/.github' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -28,7 +28,7 @@ jobs:
         with:
           separator: " "
           files: |
-            repos/linuxdeepin/*.json
+            repos/peeweep-test/*.json
       # Full sync when file changed or workflow_dispatch event
       - name: Get changed files
         id: changed-files
@@ -67,14 +67,14 @@ jobs:
 
       - name: Get all configs
         id: all-configs
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch'
+        if: (steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch') && hashFiles('repos/peeweep-test/*.json') != ''
         run: |
-          all_configs=`find repos -type f | grep json | xargs`
+          all_configs=`find repos/peeweep-test -type f | grep json | xargs`
           echo all configs $all_configs
           echo "ALL_CONFIGS=$all_configs" >> $GITHUB_OUTPUT
       - name: Sync all files
         uses: linuxdeepin/action-sync@main
-        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch'
+        if: (steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch') && hashFiles('repos/peeweep-test/*.json') != ''
         with:
           files: "${{ steps.all-configs.outputs.ALL_CONFIGS }}"
           message: |
