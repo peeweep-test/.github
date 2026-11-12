@@ -46,7 +46,7 @@ jobs:
         run: |
           git config --global url."https://github.com/".insteadOf git@github.com:
           git config --global credential.helper store
-          printf 'https://x-access-token:%s@github.com\n' "$TEST_SYNC_TOKEN" > ~/.git-credentials
+          printf 'https://MyLeeJiEun:%s@github.com\n' "$TEST_SYNC_TOKEN" > ~/.git-credentials
           chmod 600 ~/.git-credentials
           git config --global user.name deepin-admin-bot
           git config --global user.email deepin-admin-bot@deepin.org
