@@ -1,0 +1,99 @@
+[
+  {
+    "branches": [
+      "master",
+      "dev/.+",
+      "maintain/.+"
+    ],
+    "src": "workflow-templates/backup-to-gitlab.yml",
+    "dest": "peeweep-test/deepin-face/.github/workflows/backup-to-gitlab.yml"
+  },
+  {
+    "branches": [
+      "master",
+      "dev/.+",
+      "maintain/.+"
+    ],
+    "src": "workflow-templates/call-commitlint.yml",
+    "dest": "peeweep-test/deepin-face/.github/workflows/call-commitlint.yml"
+  },
+  {
+    "branches": [
+      "master",
+      "dev/.+",
+      "maintain/.+"
+    ],
+    "src": "workflow-templates/call-chatOps.yml",
+    "dest": "peeweep-test/deepin-face/.github/workflows/call-chatOps.yml"
+  },
+  {
+    "branches": [
+      "master",
+      "dev/.+",
+      "maintain/.+"
+    ],
+    "src": "workflow-templates/cppcheck.yml",
+    "dest": "peeweep-test/deepin-face/.github/workflows/cppcheck.yml"
+  },
+  {
+    "branches": [
+      "master",
+      "dev/.+",
+      "maintain/.+"
+    ],
+    "src": "workflow-templates/call-build-deb.yml",
+    "deletelist": [
+      ".github/workflows/call-build-deb.yml"
+    ],
+    "dest": "peeweep-test/deepin-face/.github/workflows/call-build-deb.yml"
+  },
+  {
+    "branches": [
+      "master",
+      "dev/.+",
+      "maintain/.+"
+    ],
+    "src": "workflow-templates/call-clacheck.yml",
+    "dest": "peeweep-test/deepin-face/.github/workflows/call-clacheck.yml"
+  },
+  {
+    "branches": [
+      "master",
+      "dev/.+",
+      "maintain/.+"
+    ],
+    "src": "workflow-templates/call-license-check.yml",
+    "dest": "peeweep-test/deepin-face/.github/workflows/call-license-check.yml"
+  },
+  {
+    "branch": [
+      "master"
+    ],
+    "src": "workflow-templates/call-auto-tag.yml",
+    "dest": "peeweep-test/deepin-face/.github/workflows/call-auto-tag.yml"
+  },
+  {
+    "branch": [
+      "master"
+    ],
+    "src": "workflow-templates/call-tag-build.yml",
+    "deletelist": [
+      ".github/workflows/call-tag-build.yml"
+    ],
+    "dest": "peeweep-test/deepin-face/.github/workflows/call-tag-build.yml"
+  },
+  {
+    "branch": [
+      "master"
+    ],
+    "src": "workflow-templates/call-update-changelog.yml",
+    "dest": "peeweep-test/deepin-face/.github/workflows/call-update-changelog.yml"
+  },
+  {
+    "branches": [
+      "master"
+    ],
+    "src": "workflow-templates/call-verify-group-version.yml",
+    "dest": "peeweep-test/deepin-face/.github/workflows/call-verify-group-version.yml"
+  }
+]
