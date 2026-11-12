@@ -39,16 +39,15 @@ jobs:
             workflow-templates/*.yml
             .github/workflows/templates-sync.yml
 
-      # Install ssh key and known_hosts
+      # Use a scoped bot token over HTTPS in the test organization.
       - name: Git config
         env:
-          SSH_KEY: ${{secrets.SYNC_SSH_KEY}}
-          KNOWN_HOSTS: ${{secrets.SYNC_SSH_KNOWN_HOSTS}}
+          TEST_SYNC_TOKEN: ${{ secrets.TEST_SYNC_TOKEN }}
         run: |
-          mkdir ~/.ssh
-          echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-          echo "$SSH_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git config --global credential.helper store
+          printf 'https://x-access-token:%s@github.com\n' "$TEST_SYNC_TOKEN" > ~/.git-credentials
+          chmod 600 ~/.git-credentials
           git config --global user.name deepin-admin-bot
           git config --global user.email deepin-admin-bot@deepin.org
 
