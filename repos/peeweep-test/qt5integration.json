@@ -1,0 +1,92 @@
+[
+  {
+    "branches": [
+      "master"
+    ],
+    "src": "workflow-templates/backup-to-gitlab.yml",
+    "dest": "peeweep-test/dde-qtintegration/.github/workflows/backup-to-gitlab.yml"
+  },
+  {
+    "branches": [
+      "master"
+    ],
+    "src": "workflow-templates/call-commitlint.yml",
+    "dest": "peeweep-test/dde-qtintegration/.github/workflows/call-commitlint.yml"
+  },
+  {
+    "branches": [
+      "master"
+    ],
+    "src": "workflow-templates/call-chatOps.yml",
+    "dest": "peeweep-test/dde-qtintegration/.github/workflows/call-chatOps.yml"
+  },
+  {
+    "branches": [
+      "master"
+    ],
+    "src": "workflow-templates/cppcheck.yml",
+    "dest": "peeweep-test/dde-qtintegration/.github/workflows/cppcheck.yml"
+  },
+  {
+    "branches": [
+      "master"
+    ],
+    "src": "workflow-templates/call-build-deb.yml",
+    "deletelist": [
+      ".github/workflows/call-build-deb.yml"
+    ],
+    "dest": "peeweep-test/dde-qtintegration/.github/workflows/call-build-deb.yml"
+  },
+  {
+    "branches": [
+      "master"
+    ],
+    "src": "workflow-templates/call-build-distribution.yml",
+    "dest": "peeweep-test/dde-qtintegration/.github/workflows/call-build-distribution.yml"
+  },
+  {
+    "branch": [
+      "master"
+    ],
+    "src": "workflow-templates/call-clacheck.yml",
+    "dest": "peeweep-test/dde-qtintegration/.github/workflows/call-clacheck.yml"
+  },
+  {
+    "branches": [
+      "master"
+    ],
+    "src": "workflow-templates/call-license-check.yml",
+    "dest": "peeweep-test/dde-qtintegration/.github/workflows/call-license-check.yml"
+  },
+  {
+    "branch": [
+      "master"
+    ],
+    "src": "workflow-templates/call-auto-tag.yml",
+    "dest": "peeweep-test/dde-qtintegration/.github/workflows/call-auto-tag.yml"
+  },
+  {
+    "branch": [
+      "master"
+    ],
+    "src": "workflow-templates/call-tag-build.yml",
+    "deletelist": [
+      ".github/workflows/call-tag-build.yml"
+    ],
+    "dest": "peeweep-test/dde-qtintegration/.github/workflows/call-tag-build.yml"
+  },
+  {
+    "branch": [
+      "master"
+    ],
+    "src": "issue-templates/dtk-config.yml",
+    "dest": "peeweep-test/dde-qtintegration/.github/ISSUE_TEMPLATE/config.yml"
+  },
+  {
+    "branches": [
+      "master"
+    ],
+    "src": "workflow-templates/call-verify-group-version.yml",
+    "dest": "peeweep-test/dde-qtintegration/.github/workflows/call-verify-group-version.yml"
+  }
+]
