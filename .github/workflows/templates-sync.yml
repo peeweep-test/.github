@@ -44,10 +44,7 @@ jobs:
         env:
           TEST_SYNC_TOKEN: ${{ secrets.TEST_SYNC_TOKEN }}
         run: |
-          git config --global url."https://github.com/".insteadOf git@github.com:
-          git config --global credential.helper store
-          printf 'https://MyLeeJiEun:%s@github.com\n' "$TEST_SYNC_TOKEN" > ~/.git-credentials
-          chmod 600 ~/.git-credentials
+          git config --global url."https://MyLeeJiEun:${TEST_SYNC_TOKEN}@github.com/".insteadOf git@github.com:
           git config --global user.name deepin-admin-bot
           git config --global user.email deepin-admin-bot@deepin.org
 
