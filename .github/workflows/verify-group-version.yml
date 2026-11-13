@@ -105,14 +105,14 @@ jobs:
               if len(groups) != 1:
                   raise RuntimeError(f"{repo} 不属于唯一的 DDE 版本组，请核实分组配置")
               group = groups[0]
-              query = urlencode({"state": "all", "head": f"{owner}:baseline/{group}",
+              query = urlencode({"state": "all", "head": f"{owner}:baseline-test-20261113/{group}",
                                  "sort": "created", "direction": "desc", "per_page": 1})
               prs = api(f"repos/{baseline}/pulls?{query}")
               if not prs:
                   raise RuntimeError(f"{group} 没有统一发布记录，请从 DDE Release group 发起，不能单独改版")
               baseline_pr = prs[0]
               if (not baseline_pr["head"]["repo"] or baseline_pr["head"]["repo"]["full_name"] != baseline
-                      or baseline_pr["head"]["ref"] != f"baseline/{group}"
+                      or baseline_pr["head"]["ref"] != f"baseline-test-20261113/{group}"
                       or baseline_pr["base"]["ref"] != default):
                   raise RuntimeError("DDE 基线 PR 的来源或目标分支不符")
               release = release_record(baseline, baseline_pr["head"]["sha"], group)
