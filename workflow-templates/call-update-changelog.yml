@@ -33,7 +33,7 @@ on:
 
 jobs:
   update_changelog:
-    uses: peeweep-test/.github/.github/workflows/update-changelog.yml@main
+    uses: peeweep-test/.github/.github/workflows/update-changelog.yml@test/formal-prs-20261113
     with:
       version: ${{ inputs.version }}
       name: ${{ inputs.name }}

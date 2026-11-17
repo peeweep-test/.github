@@ -11,4 +11,4 @@ permissions:
 
 jobs:
   verify:
-    uses: peeweep-test/.github/.github/workflows/verify-group-version.yml@main
+    uses: peeweep-test/.github/.github/workflows/verify-group-version.yml@test/formal-prs-20261113

@@ -85,15 +85,17 @@
     "dest": "peeweep-test/dde-control-center/.github/workflows/call-deploy-dev-doc.yml"
   },
   {
-    "branch": [
-      "master"
+    "branches": [
+      "master",
+      "develop/.+"
     ],
     "src": "workflow-templates/call-update-changelog.yml",
     "dest": "peeweep-test/dde-control-center/.github/workflows/call-update-changelog.yml"
   },
   {
     "branches": [
-      "master"
+      "master",
+      "develop/.+"
     ],
     "src": "workflow-templates/call-verify-group-version.yml",
     "dest": "peeweep-test/dde-control-center/.github/workflows/call-verify-group-version.yml"

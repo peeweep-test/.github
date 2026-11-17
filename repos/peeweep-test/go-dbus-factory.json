@@ -59,8 +59,9 @@
     "dest": "peeweep-test/go-dbus-factory/.github/workflows/call-auto-tag.yml"
   },
   {
-    "branch": [
-      "master"
+    "branches": [
+      "master",
+      "develop/.+"
     ],
     "src": "workflow-templates/call-update-changelog.yml",
     "dest": "peeweep-test/go-dbus-factory/.github/workflows/call-update-changelog.yml"
@@ -77,7 +78,8 @@
   },
   {
     "branches": [
-      "master"
+      "master",
+      "develop/.+"
     ],
     "src": "workflow-templates/call-verify-group-version.yml",
     "dest": "peeweep-test/go-dbus-factory/.github/workflows/call-verify-group-version.yml"
