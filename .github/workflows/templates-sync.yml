@@ -62,14 +62,14 @@ jobs:
 
       - name: Get all configs
         id: all-configs
-        if: steps.changed-files.outputs.any_changed == 'true' && hashFiles('repos/peeweep-test/*.json') != ''
+        if: github.event_name != 'workflow_dispatch' && steps.changed-files.outputs.any_changed == 'true' && hashFiles('repos/peeweep-test/*.json') != ''
         run: |
           all_configs=`find repos/peeweep-test -type f | grep json | xargs`
           echo all configs $all_configs
           echo "ALL_CONFIGS=$all_configs" >> $GITHUB_OUTPUT
       - name: Sync all files
         uses: linuxdeepin/action-sync@main
-        if: steps.changed-files.outputs.any_changed == 'true' && hashFiles('repos/peeweep-test/*.json') != ''
+        if: github.event_name != 'workflow_dispatch' && steps.changed-files.outputs.any_changed == 'true' && hashFiles('repos/peeweep-test/*.json') != ''
         with:
           files: "${{ steps.all-configs.outputs.ALL_CONFIGS }}"
           message: |
