@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from urllib.parse import parse_qs, urlsplit
 
 import yaml
 
@@ -24,6 +25,9 @@ import prepare_release_line as prepare
 class PrepareTests(unittest.TestCase):
     def setUp(self):
         self.github = GitHub()
+        self.installed = [repo for _, repo in self.github.members]
+        self.original_api = self.github.api
+        self.github.api = self.api
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.templates = Path(self.temp.name)
@@ -40,6 +44,15 @@ class PrepareTests(unittest.TestCase):
         self.config_sha = self.github.with_line()
         self.output = io.StringIO()
 
+    def api(self, url, data=None, **kwargs):
+        parsed = urlsplit(url)
+        if parsed.path == "installation/repositories":
+            self.github.calls.append((url, data, kwargs.get("method")))
+            page = int(parse_qs(parsed.query)["page"][0])
+            return {"total_count": len(self.installed), "repositories": [
+                {"full_name": repo} for repo in self.installed[(page - 1) * 100:page * 100]]}
+        return self.original_api(url, data=data, **kwargs)
+
     def run_prepare(self, dry_run=False, admin_write=True, api=None):
         with contextlib.redirect_stdout(self.output):
             return prepare.prepare(api or self.github.api, self.github.coordinator,
@@ -51,6 +64,36 @@ class PrepareTests(unittest.TestCase):
         rows = self.run_prepare(dry_run=True)
         self.assertEqual(len(rows), 17)
         self.assertTrue(all(row["operation"] == "create" and row["state"] == "BRANCH_MISSING" for row in rows))
+        self.assertEqual(self.github.writes, [])
+
+    def test_app_token_without_user_permissions_preflights_all_members(self):
+        for _, repo in self.github.members:
+            self.github.target(repo)
+        def app_api(url, data=None, **kwargs):
+            value = self.github.api(url, data=data, **kwargs)
+            if url.startswith("repos/") and url.count("/") == 2:
+                value.pop("permissions", None)
+            return value
+        rows = self.run_prepare(dry_run=True, api=app_api)
+        self.assertEqual(len(rows), 17)
+        self.assertTrue(all(row["state"] == "READY" for row in rows))
+        self.assertEqual(self.github.writes, [])
+
+    def test_installation_scope_is_paginated_before_any_writes(self):
+        self.installed = [f"test/other-{i}" for i in range(100)] + self.installed
+        rows = self.run_prepare(dry_run=True)
+        self.assertEqual(len(rows), 17)
+        self.assertIn(("installation/repositories?per_page=100&page=2", None, None),
+                      self.github.calls)
+        self.assertEqual(self.github.writes, [])
+
+    def test_malformed_installation_scope_stops_all_writes(self):
+        def api(url, data=None, **kwargs):
+            if url.startswith("installation/repositories?"):
+                return {"total_count": 1, "repositories": [{"full_name": None}]}
+            return self.github.api(url, data=data, **kwargs)
+        with self.assertRaisesRegex(RuntimeError, "App.*仓库范围"):
+            self.run_prepare(api=api)
         self.assertEqual(self.github.writes, [])
 
     def test_creates_fixed_bases_only_after_full_preflight_then_verifies_ready(self):
@@ -82,7 +125,7 @@ class PrepareTests(unittest.TestCase):
                 if failure == "commit":
                     deleted = self.github.commits.pop((repo, self.github.bases[member]))
                 elif failure == "permission":
-                    self.github.repo_changes[repo] = {"permissions": {}}
+                    self.installed.remove(repo)
                 else:
                     self.github.protections[repo, "master"] = None if failure == "protected404" else []
                 with self.assertRaisesRegex(RuntimeError, "全部成员预检未通过"):
@@ -91,7 +134,7 @@ class PrepareTests(unittest.TestCase):
                 if failure == "commit":
                     self.github.commits[repo, self.github.bases[member]] = deleted
                 elif failure == "permission":
-                    self.github.repo_changes.clear()
+                    self.installed.append(repo)
                 else:
                     self.github.protections[repo, "master"] = self.github.policy()
 
@@ -259,7 +302,8 @@ class PrepareTests(unittest.TestCase):
         self.assertIs(workflow[True]["workflow_dispatch"]["inputs"]["dry_run"]["default"], True)
         steps = workflow["jobs"]["prepare"]["steps"]
         tokens = [step for step in steps if step.get("uses", "").startswith("actions/create-github-app-token@")]
-        self.assertTrue(all(step["with"]["permission-workflows"] == "write" for step in tokens))
+        for permission in ("permission-contents", "permission-workflows", "permission-pull-requests"):
+            self.assertTrue(all(step["with"][permission] == "write" for step in tokens))
         self.assertEqual(tokens[0]["with"]["permission-administration"], "read")
         self.assertTrue(tokens[1]["continue-on-error"])
         checkout = next(step for step in steps if step.get("with", {}).get("path") == "coordinator")

@@ -27,6 +27,28 @@ def _ancestors(api, repo, base, head):
         raise RuntimeError(f"{repo} 目标分支不包含基准 {base}，禁止 force/reset/delete")
 
 
+def _installation_repositories(api):
+    result, page = set(), 1
+    while True:
+        value = api(f"installation/repositories?per_page=100&page={page}")
+        if (not isinstance(value, dict) or type(value.get("total_count")) is not int
+                or value["total_count"] < 0 or not isinstance(value.get("repositories"), list)):
+            raise RuntimeError("当前 App 仓库范围响应无法确认")
+        entries = value["repositories"]
+        if any(not isinstance(repo, dict) or not isinstance(repo.get("full_name"), str)
+               or not repo["full_name"] for repo in entries):
+            raise RuntimeError("当前 App 仓库范围条目无法确认")
+        names = {repo["full_name"] for repo in entries}
+        if len(names) != len(entries) or result & names:
+            raise RuntimeError("当前 App 仓库范围分页重复，请重跑")
+        result.update(names)
+        if len(result) == value["total_count"]:
+            return result
+        if not entries or len(result) > value["total_count"]:
+            raise RuntimeError("当前 App 仓库范围分页不完整，请重跑")
+        page += 1
+
+
 def _creation_rules(api, repo):
     owner, name = repo.split("/")
     result, cursor = [], None
@@ -297,6 +319,8 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
         raise RuntimeError("已合并 bases 必须恰好包含 17 个 G2 成员")
     if not can_create or type(app_id) is not int:
         raise RuntimeError("当前 App 的 Contents/Workflows/PR 写权限或身份不可确认")
+    # App tokens omit permissions.push; the trusted workflow requests write grants.
+    installed = _installation_repositories(api)
     rows = []
     for member, repo in members:
         row = {"repo": repo, "member": member, "operation": "conflict"}
@@ -305,10 +329,11 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
             sha = bases[member]
             if not isinstance(sha, str) or not SHA_RE.fullmatch(sha):
                 raise RuntimeError("基准不是完整 40 字符 commit SHA")
+            if repo not in installed:
+                raise RuntimeError("成员仓库不在当前 App 令牌的授权范围")
             member_info = api(f"repos/{repo}")
-            if (member_info.get("archived") is not False or member_info.get("disabled") is not False
-                    or member_info.get("permissions", {}).get("push") is not True):
-                raise RuntimeError("仓库不存在、归档、禁用或 App 写权限未知")
+            if member_info.get("archived") is not False or member_info.get("disabled") is not False:
+                raise RuntimeError("仓库归档、禁用或状态不可确认")
             commit = api(f"repos/{repo}/git/commits/{sha}")
             if commit.get("sha", "").lower() != sha.lower():
                 raise RuntimeError("基准 commit 不在对应成员仓库中")
