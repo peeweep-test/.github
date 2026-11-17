@@ -36,9 +36,8 @@ jobs:
           owner: ${{ github.repository_owner }}
           permission-actions: write
           permission-contents: write
-          permission-pull-requests: write
+          permission-pull-requests: read
           permission-administration: read
-          permission-workflows: write
 
       - name: Try Administration Write for protection
         id: admin_token
@@ -51,9 +50,8 @@ jobs:
           owner: ${{ github.repository_owner }}
           permission-actions: write
           permission-contents: write
-          permission-pull-requests: write
+          permission-pull-requests: read
           permission-administration: write
-          permission-workflows: write
 
       - name: Checkout trusted template default branch
         uses: actions/checkout@v5

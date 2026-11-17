@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import time
 from urllib.parse import quote, urlencode
 
 import yaml
@@ -202,91 +203,25 @@ def verify_preserved(actual, expected, app_id):
             raise ReadinessError("PROTECTION_FAILED", f"保护读回未保留 {key}")
 
 
-def _tool_branch(line, base):
-    branch = f"automation/prepare-release-line/{line}/{quote(base, safe='')}"
-    if subprocess.run(["git", "check-ref-format", "--branch", branch],
-                      capture_output=True).returncode:
-        raise RuntimeError("模板工具分支名非法")
-    return branch
-
-
-def _prs(api, repo, branch):
-    query = urlencode({"head": f"{repo.split('/')[0]}:{branch}", "state": "all",
-                       "per_page": 100, "sort": "created", "direction": "desc"})
-    return api(f"repos/{repo}/pulls?{query}", paginate=True)
-
-
-def install_templates(api, repo, base, line, templates):
-    """Only fast-forward a dedicated tool branch; all target updates require a PR."""
-    head = branch_info(api, repo, base)["commit"]["sha"]
-    branch = _tool_branch(line, base)
-    proposals = _prs(api, repo, branch)
-    opened = [pr for pr in proposals if pr["state"] == "open"]
-    if len(opened) > 1:
-        raise RuntimeError(f"{repo}:{base} 模板 PR 重复")
-    pr = opened[0] if opened else None
-    if pr and (pr["base"]["ref"] != base or not pr["head"]["repo"]
-               or pr["head"]["repo"]["full_name"] != repo):
-        raise RuntimeError("模板 PR 身份或目标分支已改变")
-    files = [{"path": f".github/workflows/{name}", "mode": "100644", "type": "blob", "content": text}
-             for name, text in templates.items()
-             if content(api, repo, f".github/workflows/{name}", head, missing=True) != text]
-    if not files:
-        return pr["html_url"] if pr else None
-    if not pr and proposals and not proposals[0].get("merged_at"):
-        raise RuntimeError(f"原模板 PR 已关闭未合并，请人工恢复: {proposals[0]['html_url']}")
-    value = api(f"repos/{repo}/git/ref/heads/{quote(branch, safe='/')}", missing=True)
-    previous = value["object"]["sha"] if value else None
-    marker = f"prepare-release-line:{line}:{base}"
-    installed = False
-    if previous:
-        if pr and previous != pr["head"]["sha"]:
-            raise RuntimeError("模板 PR SHA 在检查期间改变，请重跑")
-        delta = api(f"repos/{repo}/compare/{head}...{previous}")
-        if any(file["filename"] not in {f".github/workflows/{name}" for name in templates}
-               or file["status"] not in ("added", "modified") for file in delta["files"]):
-            raise RuntimeError("模板工具分支包含其他改动，不能覆盖")
-        if not pr and marker not in api(f"repos/{repo}/git/commits/{previous}")["message"]:
-            raise RuntimeError("模板工具分支来源不可确认")
-        installed = delta["merge_base_commit"]["sha"] == head and all(
-            content(api, repo, f".github/workflows/{name}", previous, missing=True) == text
-            for name, text in templates.items())
-    commit_sha = previous
-    if not installed:
-        tree = api(f"repos/{repo}/git/commits/{head}")["tree"]["sha"]
-        tree = api(f"repos/{repo}/git/trees", {"base_tree": tree, "tree": files})
-        parents = list(dict.fromkeys([previous, head] if previous else [head]))
-        commit = api(f"repos/{repo}/git/commits", {"tree": tree["sha"], "parents": parents,
-            "message": f"chore: install G2 release-line templates\n\n{marker}"})
-        commit_sha = commit["sha"]
-        if branch_info(api, repo, base)["commit"]["sha"] != head:
-            raise RuntimeError("模板目标分支在预检后变化，请重跑")
-        if previous:
-            api(f"repos/{repo}/git/refs/heads/{quote(branch, safe='/')}",
-                {"sha": commit_sha, "force": False}, method="PATCH")
-        else:
-            try:
-                api(f"repos/{repo}/git/refs", {"ref": f"refs/heads/{branch}", "sha": commit_sha})
-            except RuntimeError:
-                current = api(f"repos/{repo}/git/ref/heads/{quote(branch, safe='/')}", missing=True)
-                if not current or current["object"]["sha"] != commit_sha:
-                    raise RuntimeError("模板分支并发创建或 API 失败，请重跑")
-    if pr is None:
-        try:
-            pr = api(f"repos/{repo}/pulls", {
-                "head": branch, "base": base, "draft": False,
-                "title": f"chore: prepare G2 {line} workflow templates",
-                "body": f"{marker}\n\n复用组织现有发版/guard 模板；合并后重跑 Prepare 读回验证。"
-                        "不解除保护，不直接推送目标分支，不自动合并。"})
-        except RuntimeError:
-            opened = [p for p in _prs(api, repo, branch) if p["state"] == "open"]
-            if (len(opened) != 1 or opened[0]["base"]["ref"] != base
-                    or not opened[0]["head"]["repo"] or opened[0]["head"]["repo"]["full_name"] != repo
-                    or opened[0]["head"]["ref"] != branch
-                    or opened[0]["head"]["sha"] != commit_sha):
-                raise
-            pr = opened[0]
-    return pr["html_url"]
+def sync_templates(api, owner):
+    """Run the existing organization template sync and wait for its result."""
+    repo = f"{owner}/.github"
+    default = api(f"repos/{repo}")["default_branch"]
+    query = urlencode({"branch": default, "event": "workflow_dispatch", "per_page": 20})
+    previous = {run["id"] for run in
+                api(f"repos/{repo}/actions/workflows/templates-sync.yml/runs?{query}")["workflow_runs"]}
+    api(f"repos/{repo}/actions/workflows/templates-sync.yml/dispatches",
+        {"ref": default}, method="POST")
+    deadline = time.monotonic() + 900
+    while time.monotonic() < deadline:
+        runs = api(f"repos/{repo}/actions/workflows/templates-sync.yml/runs?{query}")["workflow_runs"]
+        run = next((item for item in runs if item["id"] not in previous), None)
+        if run and run["status"] == "completed":
+            if run["conclusion"] != "success":
+                raise RuntimeError(f"模板同步失败: {run['html_url']}")
+            return run
+        time.sleep(5)
+    raise RuntimeError("模板同步超时，请查看 templates-sync 工作流")
 
 
 def _report(rows):
@@ -346,17 +281,13 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
             create_rules = _creation_rules(api, repo)
             if not target:
                 _may_create(api, repo, branch, app_id, create_rules)
-            for base in dict.fromkeys((default, branch)):
-                tool = _tool_branch(line, base)
-                if api(f"repos/{repo}/git/ref/heads/{quote(tool, safe='/')}", missing=True) is None:
-                    _may_create(api, repo, tool, app_id, create_rules)
             row.update(operation="existing" if target else "create", base=sha, default=default,
                        templates=_templates(template_root, api, repo, (default, branch)))
         except Exception as error:
             row.update(operation="conflict", detail=str(error))
     _report(rows)
     if any(row["operation"] == "conflict" for row in rows):
-        raise RuntimeError("全部成员预检未通过；未创建任何分支、模板 PR 或保护")
+        raise RuntimeError("全部成员预检未通过；未创建任何分支、同步模板或保护")
     if dry_run:
         for row in rows:
             try:
@@ -365,7 +296,7 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
                 if any(content(api, row["repo"], f".github/workflows/{name}", base, missing=True) != text
                        for base in dict.fromkeys((row["default"], branch))
                        for name, text in row["templates"].items()):
-                    raise ReadinessError("TEMPLATE_MISSING", "将创建模板 PR，合并后重跑")
+                    raise ReadinessError("TEMPLATE_MISSING", "正式运行将调用统一模板同步")
                 check_member_ready(api, row["repo"], branch)
                 row["state"] = "READY"
             except ReadinessError as error:
@@ -394,15 +325,14 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
             row.update(operation="conflict", detail=str(error))
             _report(rows)
             raise RuntimeError("分支创建中断；保留所有已创建分支，重跑只补缺失项") from error
+    if any(content(api, row["repo"], f".github/workflows/{name}", base, missing=True) != text
+           for row in rows for base in dict.fromkeys((row["default"], branch))
+           for name, text in row["templates"].items()):
+        sync_templates(api, coordinator.split("/")[0])
     for row in rows:
         state = "TEMPLATE_MISSING"
         try:
             repo = row["repo"]
-            pending = [link for base in dict.fromkeys((row["default"], branch))
-                       if (link := install_templates(api, repo, base, line, row["templates"]))]
-            if pending:
-                row.update(state=state, detail="待人工合并后重跑: " + " ".join(pending))
-                continue
             state = "WORKFLOW_INACTIVE"
             for filename in WORKFLOW_FILES:
                 workflow = api(f"repos/{repo}/actions/workflows/{filename}", missing=True)
@@ -429,7 +359,7 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
             row.update(state=state, detail=str(error))
     _report(rows)
     if any(row["state"] != "READY" for row in rows):
-        raise RuntimeError("G2 尚未全部 READY；按链接合并模板 PR / 配置保护后重跑 Prepare")
+        raise RuntimeError("G2 尚未全部 READY；修复模板同步或保护配置后重跑 Prepare")
     return rows
 
 

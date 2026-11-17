@@ -26,6 +26,8 @@ class PrepareTests(unittest.TestCase):
     def setUp(self):
         self.github = GitHub()
         self.installed = [repo for _, repo in self.github.members]
+        self.sync_runs = []
+        self.sync_dispatches = 0
         self.original_api = self.github.api
         self.github.api = self.api
         self.temp = tempfile.TemporaryDirectory()
@@ -51,6 +53,27 @@ class PrepareTests(unittest.TestCase):
             page = int(parse_qs(parsed.query)["page"][0])
             return {"total_count": len(self.installed), "repositories": [
                 {"full_name": repo} for repo in self.installed[(page - 1) * 100:page * 100]]}
+        prefix = f"repos/{self.github.shared_repo}/actions/workflows/templates-sync.yml"
+        if parsed.path == prefix + "/runs":
+            self.github.calls.append((url, data, kwargs.get("method")))
+            return {"workflow_runs": copy.deepcopy(self.sync_runs)}
+        if parsed.path == prefix + "/dispatches":
+            self.github.calls.append((url, data, kwargs.get("method")))
+            self.github.writes.append((parsed.path, copy.deepcopy(data), kwargs.get("method")))
+            self.sync_dispatches += 1
+            for _, repo in self.github.members:
+                for branch in ("master", self.github.branch):
+                    sha = self.github.refs.get((repo, branch))
+                    if sha is None:
+                        continue
+                    files = self.github.files[repo, sha]
+                    files.update({f".github/workflows/{name}": text
+                                  for name, text in self.github.templates.items()})
+                    self.github.add_commit(repo, files, [sha], branch=branch, message="template sync")
+            self.sync_runs.insert(0, {
+                "id": 900 + self.sync_dispatches, "status": "completed", "conclusion": "success",
+                "html_url": f"https://github.com/{self.github.shared_repo}/actions/runs/900"})
+            return None
         return self.original_api(url, data=data, **kwargs)
 
     def run_prepare(self, dry_run=False, admin_write=True, api=None):
@@ -183,41 +206,38 @@ class PrepareTests(unittest.TestCase):
         self.github.fail_once[f"repos/{repo}/git/refs"] = race
         self.assertTrue(all(row["state"] == "READY" for row in self.run_prepare()))
 
-    def test_protected_template_install_uses_pr_and_waits_for_merge(self):
+    def test_template_sync_updates_existing_branch_without_pr(self):
         member, repo = self.github.members[0]
         base = self.github.bases[member]
         files = {"debian/changelog": self.github.files[repo, base]["debian/changelog"]}
         old = self.github.add_commit(repo, files, [base])
         self.github.target(repo, sha=old)
-        with self.assertRaisesRegex(RuntimeError, "尚未全部 READY"):
-            self.run_prepare()
-        templates = [pr for pr in self.github.prs if pr["repo"] == repo]
-        self.assertEqual(len(templates), 1)
-        self.assertEqual(templates[0]["base"]["ref"], self.github.branch)
-        self.assertIn(templates[0]["html_url"], self.output.getvalue())
-        self.assertEqual(self.github.refs[repo, self.github.branch], old)
+        rows = self.run_prepare()
+        self.assertTrue(all(row["state"] == "READY" for row in rows))
+        self.assertEqual(self.sync_dispatches, 1)
+        self.assertEqual(self.github.prs, [])
+        self.assertNotEqual(self.github.refs[repo, self.github.branch], old)
+        synced = self.github.files[repo, self.github.refs[repo, self.github.branch]]
+        for name, text in self.github.templates.items():
+            self.assertEqual(synced[f".github/workflows/{name}"], text)
         self.github.writes.clear()
-        with self.assertRaises(RuntimeError):
-            self.run_prepare()
-        self.assertEqual(len(self.github.prs), 1)
-        self.assertEqual(self.github.refs[repo, self.github.branch], old)
+        rows = self.run_prepare()
+        self.assertTrue(all(row["state"] == "READY" for row in rows))
+        self.assertEqual(self.sync_dispatches, 1)
         self.assertEqual(self.github.writes, [])
-        self.assertFalse(any(path.endswith("/git/refs/heads/" + self.github.branch)
-                             for path, _, _ in self.github.writes))
-        self.github.merge(templates[0])
-        self.assertTrue(all(row["state"] == "READY" for row in self.run_prepare()))
 
-    def test_missing_default_and_target_templates_both_require_merged_prs(self):
+    def test_missing_default_and_target_templates_use_one_sync(self):
         member, repo = self.github.members[0]
         base = self.github.bases[member]
         self.github.files[repo, base].pop(".github/workflows/call-update-changelog.yml")
-        with self.assertRaises(RuntimeError):
-            self.run_prepare()
-        prs = [pr for pr in self.github.prs if pr["repo"] == repo]
-        self.assertEqual({pr["base"]["ref"] for pr in prs}, {"master", self.github.branch})
-        for pr in prs:
-            self.github.merge(pr)
-        self.assertTrue(all(row["state"] == "READY" for row in self.run_prepare()))
+        rows = self.run_prepare()
+        self.assertTrue(all(row["state"] == "READY" for row in rows))
+        self.assertEqual(self.sync_dispatches, 1)
+        self.assertEqual(self.github.prs, [])
+        for branch in ("master", self.github.branch):
+            sha = self.github.refs[repo, branch]
+            for name, text in self.github.templates.items():
+                self.assertEqual(self.github.files[repo, sha][f".github/workflows/{name}"], text)
 
     def test_unknown_rule_creation_permission_stops_all_writes(self):
         repo = self.github.members[-1][1]
@@ -265,45 +285,16 @@ class PrepareTests(unittest.TestCase):
                       self.github.writes)
         self.assertEqual(self.github.workflows[repo, "call-update-changelog.yml"], "active")
 
-    def test_pr_creation_uncertainty_requires_exact_head_identity(self):
-        for bad in ("repo", "ref", "sha", None):
-            github = GitHub()
-            member, repo = github.members[0]
-            files = {"debian/changelog": github.changelog("1:6.1.113")}
-            github.target(repo, sha=github.add_commit(repo, files, [github.bases[member]]))
-            original = github.api
-            saved = None
-            def api(url, data=None, **kwargs):
-                nonlocal saved
-                if url == f"repos/{repo}/pulls" and data:
-                    saved = github.add_pr(repo, data["head"], data["base"])
-                    if bad == "repo":
-                        saved["head"]["repo"]["full_name"] = "contributor/go-lib"
-                    elif bad == "ref":
-                        saved["head"]["ref"] = "different-tool-branch"
-                    elif bad == "sha":
-                        saved["head"]["sha"] = "f" * 40
-                    raise RuntimeError("PR response lost")
-                if url.startswith(f"repos/{repo}/pulls?") and saved:
-                    return [copy.deepcopy(saved)]
-                return original(url, data=data, **kwargs)
-            with self.subTest(bad=bad):
-                if bad:
-                    with self.assertRaises(RuntimeError):
-                        prepare.install_templates(api, repo, github.branch, github.line, github.templates)
-                else:
-                    link = prepare.install_templates(api, repo, github.branch, github.line, github.templates)
-                    self.assertEqual(link, saved["html_url"])
-                self.assertEqual(len(github.prs), 1)
-
     def test_workflow_trust_permissions_and_no_extra_workflow(self):
         workflow = yaml.safe_load((ROOT / ".github/workflows/prepare-release-line.yml").read_text())
         self.assertEqual(set(workflow[True]), {"workflow_dispatch"})
         self.assertIs(workflow[True]["workflow_dispatch"]["inputs"]["dry_run"]["default"], True)
         steps = workflow["jobs"]["prepare"]["steps"]
         tokens = [step for step in steps if step.get("uses", "").startswith("actions/create-github-app-token@")]
-        for permission in ("permission-contents", "permission-workflows", "permission-pull-requests"):
-            self.assertTrue(all(step["with"][permission] == "write" for step in tokens))
+        self.assertTrue(all(step["with"]["permission-contents"] == "write" for step in tokens))
+        self.assertTrue(all(step["with"]["permission-actions"] == "write" for step in tokens))
+        self.assertTrue(all(step["with"]["permission-pull-requests"] == "read" for step in tokens))
+        self.assertFalse(any("permission-workflows" in step["with"] for step in tokens))
         self.assertEqual(tokens[0]["with"]["permission-administration"], "read")
         self.assertTrue(tokens[1]["continue-on-error"])
         checkout = next(step for step in steps if step.get("with", {}).get("path") == "coordinator")
