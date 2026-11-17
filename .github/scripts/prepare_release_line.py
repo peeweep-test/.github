@@ -176,7 +176,7 @@ def protection_payload(target, default, app_id):
                 checks[name] = binding
     checks[GUARD_CONTEXT] = app_id
     payload = {
-        "required_status_checks": {"strict": True, "contexts": [], "checks": [
+        "required_status_checks": {"strict": True, "checks": [
             {"context": context, "app_id": binding} for context, binding in checks.items()]},
         "required_pull_request_reviews": reviews,
         "enforce_admins": True,
