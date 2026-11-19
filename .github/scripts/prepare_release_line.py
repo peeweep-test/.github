@@ -300,7 +300,7 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
                        for base in dict.fromkeys((row["default"], branch))
                        for name, text in row["templates"].items()):
                     raise ReadinessError("TEMPLATE_MISSING", "正式运行将调用统一模板同步")
-                check_member_ready(api, row["repo"], branch)
+                check_member_ready(api, row["repo"], branch, app_id)
                 row["state"] = "READY"
             except ReadinessError as error:
                 row.update(state=error.state, detail=str(error))
@@ -351,7 +351,7 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
                     api(f"repos/{repo}/actions/workflows/{filename}/enable", method="PUT")
             check_member_workflows(api, repo, branch)
             state = "PROTECTION_FAILED"
-            app_source = release_app_id(api)
+            app_source = release_app_id(app_id)
             target = read_protection(api, repo, branch)
             if not protection_ready(target, app_source):
                 default = read_protection(api, repo, row["default"])
@@ -366,7 +366,7 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
                 api(f"repos/{repo}/branches/{quote(branch, safe='')}/protection", payload, method="PUT")
                 observed = read_protection(api, repo, branch)
                 verify_preserved(observed, payload, app_source)
-            check_member_ready(api, repo, branch)
+            check_member_ready(api, repo, branch, app_id)
             target = branch_info(api, repo, branch)
             _ancestors(api, repo, row["base"], target["commit"]["sha"])
             row.update(state="READY", detail="已读回验证入口、workflow 启用与实际有效保护")
