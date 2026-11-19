@@ -31,6 +31,15 @@ def _ancestors(api, repo, base, head):
         raise RuntimeError(f"{repo} 目标分支不包含基准 {base}，禁止 force/reset/delete")
 
 
+def _wait_branch(api, repo, branch, attempts=10):
+    for _ in range(attempts):
+        target = branch_info(api, repo, branch, missing=True)
+        if target:
+            return target
+        time.sleep(1)
+    raise RuntimeError(f"{repo}:{branch} 创建后未可读")
+
+
 def _installation_repositories(api):
     result, page = set(), 1
     while True:
@@ -322,7 +331,7 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
                     target = branch_info(api, row["repo"], branch, missing=True)
                     if target is None:
                         raise
-                target = branch_info(api, row["repo"], branch)
+                target = _wait_branch(api, row["repo"], branch)
             _ancestors(api, row["repo"], row["base"], target["commit"]["sha"])
         except Exception as error:
             row.update(operation="conflict", detail=str(error))
