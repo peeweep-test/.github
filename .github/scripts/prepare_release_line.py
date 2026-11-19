@@ -330,6 +330,14 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
            for name, text in row["templates"].items()):
         sync_templates(api, coordinator.split("/")[0])
     for row in rows:
+        try:
+            target = branch_info(api, row["repo"], branch)
+            _ancestors(api, row["repo"], row["base"], target["commit"]["sha"])
+        except Exception as error:
+            row.update(operation="conflict", detail=str(error))
+            _report(rows)
+            raise RuntimeError("模板同步后目标分支不再包含固定基准，请人工核实") from error
+    for row in rows:
         state = "TEMPLATE_MISSING"
         try:
             repo = row["repo"]
