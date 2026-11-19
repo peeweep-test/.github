@@ -36,7 +36,6 @@ jobs:
           separator: " "
           files: |
             workflow-templates/*.yml
-            .github/workflows/templates-sync.yml
 
       # Use a scoped bot token over HTTPS in the test organization.
       - name: Git config
@@ -49,7 +48,7 @@ jobs:
 
       - name: Sync changed configs
         uses: linuxdeepin/action-sync@main
-        if: steps.changed-configs.outputs.any_changed == 'true'
+        if: steps.changed-configs.outputs.any_changed == 'true' && steps.changed-files.outputs.any_changed != 'true'
         with:
           files: "${{ steps.changed-configs.outputs.all_changed_files }}"
           message: |
@@ -62,14 +61,14 @@ jobs:
 
       - name: Get all configs
         id: all-configs
-        if: github.event_name != 'workflow_dispatch' && steps.changed-files.outputs.any_changed == 'true' && hashFiles('repos/peeweep-test/*.json') != ''
+        if: github.event_name != 'workflow_dispatch' && steps.changed-files.outputs.any_changed == 'true' && steps.changed-configs.outputs.any_changed != 'true' && hashFiles('repos/peeweep-test/*.json') != ''
         run: |
           all_configs=`find repos/peeweep-test -type f | grep json | xargs`
           echo all configs $all_configs
           echo "ALL_CONFIGS=$all_configs" >> $GITHUB_OUTPUT
       - name: Sync all files
         uses: linuxdeepin/action-sync@main
-        if: github.event_name != 'workflow_dispatch' && steps.changed-files.outputs.any_changed == 'true' && hashFiles('repos/peeweep-test/*.json') != ''
+        if: github.event_name != 'workflow_dispatch' && steps.changed-files.outputs.any_changed == 'true' && steps.changed-configs.outputs.any_changed != 'true' && hashFiles('repos/peeweep-test/*.json') != ''
         with:
           files: "${{ steps.all-configs.outputs.ALL_CONFIGS }}"
           message: |
@@ -81,7 +80,7 @@ jobs:
             Influence: none
 
       - name: Prepare release-line sync configs
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && steps.changed-configs.outputs.any_changed == 'true')
         run: |
           python3 - <<'PY'
           import json
@@ -110,7 +109,7 @@ jobs:
           PY
 
       - name: Sync release-line update template
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && steps.changed-configs.outputs.any_changed == 'true')
         uses: linuxdeepin/action-sync@main
         with:
           files: .github/release-line-update.json
@@ -121,7 +120,7 @@ jobs:
             Influence: none
 
       - name: Sync release-line guard template
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && steps.changed-configs.outputs.any_changed == 'true')
         uses: linuxdeepin/action-sync@main
         with:
           files: .github/release-line-guard.json
