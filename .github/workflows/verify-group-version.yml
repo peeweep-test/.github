@@ -1,11 +1,18 @@
+# SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+# SPDX-License-Identifier: GPL-3.0-or-later
 name: Verify group version
 
-on: workflow_call
+on:
+  workflow_call:
+    secrets:
+      APP_ID:
+        required: true
+      APP_PRIVATE_KEY:
+        required: true
 
 permissions:
   contents: read
   pull-requests: read
-  statuses: write
 
 jobs:
   verify:
@@ -15,10 +22,22 @@ jobs:
       group: group-version-guard-${{ github.event.pull_request.head.sha }}
       cancel-in-progress: false
     env:
-      GH_TOKEN: ${{ github.token }}
       PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
+      - name: Create release App token
+        id: release_token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-contents: read
+          permission-pull-requests: read
+          permission-statuses: write
+
       - name: Mark version check pending
+        env:
+          GH_TOKEN: ${{ steps.release_token.outputs.token }}
         run: |
           gh api "repos/$GITHUB_REPOSITORY/statuses/$PR_HEAD_SHA" --method POST \
             -f state=pending -f context=group-version-guard \
@@ -252,6 +271,7 @@ jobs:
       - name: Publish version check result
         if: always()
         env:
+          GH_TOKEN: ${{ steps.release_token.outputs.token }}
           VERIFY_OUTCOME: ${{ steps.verify.outcome }}
         run: |
           set -euo pipefail

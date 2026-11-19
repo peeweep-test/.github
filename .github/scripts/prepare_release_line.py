@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 UnionTech Software Technology Co., Ltd.
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Prepare only the 17 G2 members from the merged, trusted dde configuration."""
 
 import copy
@@ -17,8 +19,9 @@ sys.path.insert(0, str(Path(os.environ.get("COORDINATOR_DIR", "coordinator")) /
                        ".github/scripts"))
 from release_line_checks import (  # noqa: E402
     GUARD_CONTEXT, SHA_RE, WORKFLOW_FILES, ReadinessError, _enabled, _matches,
-    actions_app_id, api, branch_info, check_member_ready, check_member_workflows,
+    api, branch_info, check_member_ready, check_member_workflows,
     check_workflow_file, content, g2_members, protection_ready, read_protection, release_lines,
+    release_app_id,
 )
 
 
@@ -348,11 +351,15 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
                     api(f"repos/{repo}/actions/workflows/{filename}/enable", method="PUT")
             check_member_workflows(api, repo, branch)
             state = "PROTECTION_FAILED"
-            app_source = actions_app_id(api)
+            app_source = release_app_id(api)
             target = read_protection(api, repo, branch)
             if not protection_ready(target, app_source):
                 default = read_protection(api, repo, row["default"])
-                payload = protection_payload(target, default, app_source)
+                latest_target = read_protection(api, repo, branch)
+                latest_default = read_protection(api, repo, row["default"])
+                if latest_target != target:
+                    raise ReadinessError(state, "分支保护在预检后发生变化，请重跑 Prepare")
+                payload = protection_payload(latest_target, latest_default, app_source)
                 if not admin_write:
                     raise ReadinessError(state, f"{repo} App 无 Admin Write；管理员保留现有审核/检查并配置"
                                          f"保护后重跑: https://github.com/{repo}/settings/branches")
@@ -360,6 +367,8 @@ def prepare(api, coordinator, config_sha, template_root, line, dry_run=True,
                 observed = read_protection(api, repo, branch)
                 verify_preserved(observed, payload, app_source)
             check_member_ready(api, repo, branch)
+            target = branch_info(api, repo, branch)
+            _ancestors(api, repo, row["base"], target["commit"]["sha"])
             row.update(state="READY", detail="已读回验证入口、workflow 启用与实际有效保护")
         except ReadinessError as error:
             row.update(state=error.state, detail=str(error))
