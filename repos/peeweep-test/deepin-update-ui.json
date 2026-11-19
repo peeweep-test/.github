@@ -64,7 +64,8 @@
   {
     "branches": [
       "master",
-      "develop/.+"
+      "develop/.+",
+      "release/.+"
     ],
     "src": "workflow-templates/call-update-changelog.yml",
     "dest": "peeweep-test/deepin-update-ui/.github/workflows/call-update-changelog.yml"
@@ -72,7 +73,8 @@
   {
     "branches": [
       "master",
-      "develop/.+"
+      "develop/.+",
+      "release/.+"
     ],
     "src": "workflow-templates/call-verify-group-version.yml",
     "dest": "peeweep-test/deepin-update-ui/.github/workflows/call-verify-group-version.yml"
